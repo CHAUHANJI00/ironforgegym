@@ -12,6 +12,53 @@ router.use(authMiddleware);
 // ──────────────────────────────────────────────────────────
 //  Helper: sanitise + build SET clause for dynamic updates
 // ──────────────────────────────────────────────────────────
+
+const profileValidation = [
+  body('full_name').optional().trim().isLength({ min: 1, max: 120 }),
+  body('date_of_birth').optional({ values: 'falsy' }).isISO8601().withMessage('date_of_birth must be a valid date.'),
+  body('gender').optional({ values: 'falsy' }).isIn(['male', 'female', 'non_binary', 'prefer_not_to_say']),
+  body('nationality').optional({ values: 'falsy' }).trim().isLength({ max: 80 }),
+  body('city').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('state').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('country').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('bio').optional({ values: 'falsy' }).trim().isLength({ max: 4000 }),
+  body('profile_photo').optional({ values: 'falsy' }).isURL().withMessage('profile_photo must be a valid URL.'),
+  body('height_cm').optional({ values: 'falsy' }).isFloat({ min: 100, max: 250 }),
+  body('weight_kg').optional({ values: 'falsy' }).isFloat({ min: 30, max: 300 }),
+  body('blood_group').optional({ values: 'falsy' }).isIn(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']),
+  body('dominant_hand').optional({ values: 'falsy' }).isIn(['left', 'right', 'ambidextrous']),
+  body('sport_category').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('sport_discipline').optional({ values: 'falsy' }).trim().isLength({ max: 150 }),
+  body('playing_level').optional({ values: 'falsy' }).isIn(['beginner', 'amateur', 'semi_pro', 'professional', 'elite']),
+  body('team_club').optional({ values: 'falsy' }).trim().isLength({ max: 150 }),
+  body('coach_name').optional({ values: 'falsy' }).trim().isLength({ max: 120 }),
+  body('years_experience').optional({ values: 'falsy' }).isInt({ min: 0, max: 100 }),
+  body('membership_plan').optional({ values: 'falsy' }).isIn(['iron_starter', 'iron_forge', 'iron_elite']),
+  body('phone').optional({ values: 'falsy' }).trim().isLength({ max: 20 }),
+  body('emergency_contact_name').optional({ values: 'falsy' }).trim().isLength({ max: 120 }),
+  body('emergency_contact_phone').optional({ values: 'falsy' }).trim().isLength({ max: 20 }),
+  body('social_instagram').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('social_twitter').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('social_linkedin').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('website').optional({ values: 'falsy' }).isURL().withMessage('website must be a valid URL.'),
+];
+
+const trainingValidation = [
+  body('training_days').optional({ values: 'falsy' }).trim().isLength({ max: 200 }),
+  body('session_duration').optional({ values: 'falsy' }).trim().isLength({ max: 50 }),
+  body('preferred_time').optional({ values: 'falsy' }).isIn(['morning', 'afternoon', 'evening', 'night']),
+  body('current_program').optional({ values: 'falsy' }).trim().isLength({ max: 255 }),
+  body('training_goals').optional({ values: 'falsy' }).trim().isLength({ max: 4000 }),
+  body('diet_type').optional({ values: 'falsy' }).trim().isLength({ max: 100 }),
+  body('supplements').optional({ values: 'falsy' }).trim().isLength({ max: 4000 }),
+  body('injuries_history').optional({ values: 'falsy' }).trim().isLength({ max: 4000 }),
+  body('recovery_methods').optional({ values: 'falsy' }).trim().isLength({ max: 4000 }),
+];
+
+const idParamValidation = [
+  param('id').isInt({ min: 1 }).withMessage('id must be a positive integer.'),
+];
+
 function buildSetClause(allowed, body) {
   const fields = [];
   const values = [];
@@ -80,7 +127,7 @@ router.get('/profile', async (req, res) => {
 // ──────────────────────────────────────────────────────────
 //  PUT /api/athlete/profile
 // ──────────────────────────────────────────────────────────
-router.put('/profile', async (req, res) => {
+router.put('/profile', profileValidation, async (req, res) => {
   const allowedProfile = [
     'date_of_birth', 'gender', 'nationality', 'city', 'state', 'country', 'bio', 'profile_photo',
     'height_cm', 'weight_kg', 'blood_group', 'dominant_hand',
@@ -89,7 +136,11 @@ router.put('/profile', async (req, res) => {
     'phone', 'emergency_contact_name', 'emergency_contact_phone',
     'social_instagram', 'social_twitter', 'social_linkedin', 'website',
   ];
-  const allowedUser = ['full_name'];
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ success: false, errors: errors.array() });
+  }
 
   try {
     const userId = req.user.id;
@@ -129,11 +180,17 @@ router.put('/profile', async (req, res) => {
 // ──────────────────────────────────────────────────────────
 //  PUT /api/athlete/training
 // ──────────────────────────────────────────────────────────
-router.put('/training', async (req, res) => {
+router.put('/training', trainingValidation, async (req, res) => {
   const allowed = [
     'training_days', 'session_duration', 'preferred_time', 'current_program',
     'training_goals', 'diet_type', 'supplements', 'injuries_history', 'recovery_methods',
   ];
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ success: false, errors: errors.array() });
+  }
+
   try {
     const userId = req.user.id;
     const { fields, values } = buildSetClause(allowed, req.body);
@@ -194,7 +251,12 @@ router.post(
 // ──────────────────────────────────────────────────────────
 //  DELETE /api/athlete/achievements/:id
 // ──────────────────────────────────────────────────────────
-router.delete('/achievements/:id', async (req, res) => {
+router.delete('/achievements/:id', idParamValidation, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ success: false, errors: errors.array() });
+  }
+
   try {
     const [result] = await pool.query(
       'DELETE FROM achievements WHERE id = ? AND user_id = ?',
@@ -312,7 +374,12 @@ router.get('/stats/series', async (req, res) => {
 // ──────────────────────────────────────────────────────────
 //  DELETE /api/athlete/stats/:id
 // ──────────────────────────────────────────────────────────
-router.delete('/stats/:id', async (req, res) => {
+router.delete('/stats/:id', idParamValidation, async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).json({ success: false, errors: errors.array() });
+  }
+
   try {
     const [result] = await pool.query(
       'DELETE FROM performance_stats WHERE id = ? AND user_id = ?',

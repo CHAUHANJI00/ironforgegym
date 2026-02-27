@@ -126,14 +126,3 @@ CREATE TABLE IF NOT EXISTS training_details (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- ─────────────────────────────────────────────
---  SAMPLE SEED DATA (optional — remove in prod)
--- ─────────────────────────────────────────────
--- Admin user  (password: Admin@1234)
-INSERT IGNORE INTO users (full_name, email, password_hash, role)
-VALUES (
-  'Iron Forge Admin',
-  'admin@ironforgegym.com',
-  '$2a$12$Ynq5Z8t.QpIIGkq5uRoRxuGm2leMpD6PZi9f/fNmNijTn4yqn6Vgy',
-  'admin'
-);

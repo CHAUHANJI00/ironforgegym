@@ -9,7 +9,8 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = (req, res, next) => {
   let token =
     (req.headers['authorization'] || '').replace(/^Bearer\s+/i, '') ||
-    req.headers['x-auth-token'];
+    req.headers['x-auth-token'] ||
+    req.cookies?.ams_token;
 
   if (!token) {
     return res.status(401).json({ success: false, message: 'No token — authorisation denied.' });

@@ -337,7 +337,12 @@
   // If already logged in, show dashboard link
   if (Auth.isLoggedIn()) {
     const actions = document.querySelector('.navbar-actions');
-    actions.innerHTML = `<a href="profile.html" class="btn btn-primary btn-sm">My Dashboard →</a>`;
+    actions.textContent = '';
+    const link = document.createElement('a');
+    link.href = 'profile.html';
+    link.className = 'btn btn-primary btn-sm';
+    link.textContent = 'My Dashboard →';
+    actions.appendChild(link);
   }
 
   initScrollAnimation();

@@ -9,13 +9,21 @@ const API_BASE = (() => {
 })();
 
 /* ── Token helpers ─────────────────────────────── */
+let memoryToken = null;
+
 const Auth = {
-  getToken:   ()        => localStorage.getItem('ams_token'),
-  setToken:   (t)       => localStorage.setItem('ams_token', t),
+  getToken:   ()        => memoryToken || localStorage.getItem('ams_token'), // legacy fallback
+  setToken:   (t)       => { memoryToken = t; localStorage.setItem('ams_session', '1'); localStorage.removeItem('ams_token'); },
   getUser:    ()        => { try { return JSON.parse(localStorage.getItem('ams_user')); } catch { return null; } },
   setUser:    (u)       => localStorage.setItem('ams_user', JSON.stringify(u)),
-  isLoggedIn: ()        => !!localStorage.getItem('ams_token'),
-  logout:     ()        => { localStorage.removeItem('ams_token'); localStorage.removeItem('ams_user'); },
+  isLoggedIn: ()        => localStorage.getItem('ams_session') === '1' || !!memoryToken || !!localStorage.getItem('ams_token'),
+  logout:     ()        => {
+    memoryToken = null;
+    localStorage.removeItem('ams_token');
+    localStorage.removeItem('ams_session');
+    localStorage.removeItem('ams_user');
+    fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
+  },
 };
 
 /* ── Fetch wrapper ─────────────────────────────── */
@@ -25,7 +33,7 @@ async function apiFetch(endpoint, options = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
 
   try {
-    const res  = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+    const res  = await fetch(`${API_BASE}${endpoint}`, { ...options, headers, credentials: 'include' });
     const data = await res.json();
     if (!res.ok) throw { status: res.status, ...data };
     return data;
@@ -67,7 +75,14 @@ function toast(msg, type = 'success', duration = 3500) {
     animation:fadeIn 0.25s ease; min-width:260px; max-width:360px; font-family:'Barlow',sans-serif;
     box-shadow:0 4px 20px rgba(0,0,0,0.5);
   `;
-  el.innerHTML = `<span style="color:${colors[type]};font-weight:700;">${icons[type]}</span><span>${msg}</span>`;
+  const iconEl = document.createElement('span');
+  iconEl.style.color = colors[type];
+  iconEl.style.fontWeight = '700';
+  iconEl.textContent = icons[type];
+  const msgEl = document.createElement('span');
+  msgEl.textContent = msg;
+  el.appendChild(iconEl);
+  el.appendChild(msgEl);
   container.appendChild(el);
   setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(), 300); }, duration);
 }
