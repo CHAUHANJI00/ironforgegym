@@ -239,6 +239,77 @@ router.post(
 );
 
 // ──────────────────────────────────────────────────────────
+//  GET /api/athlete/stats/series
+// ──────────────────────────────────────────────────────────
+router.get('/stats/series', async (req, res) => {
+  try {
+    const [stats] = await pool.query(
+      `SELECT id, stat_name, stat_value, unit, recorded_date, notes
+       FROM performance_stats
+       WHERE user_id = ?
+       ORDER BY stat_name ASC, recorded_date ASC, id ASC`,
+      [req.user.id]
+    );
+
+    const byMetric = new Map();
+    for (const row of stats) {
+      const metric = row.stat_name;
+      if (!byMetric.has(metric)) {
+        byMetric.set(metric, {
+          metric,
+          unit: row.unit || null,
+          points: [],
+          latest: null,
+          personal_best: null,
+        });
+      }
+
+      const bucket = byMetric.get(metric);
+      if (!bucket.unit && row.unit) bucket.unit = row.unit;
+
+      const numericValue = Number.parseFloat(row.stat_value);
+      const isNumeric = Number.isFinite(numericValue);
+      const point = {
+        id: row.id,
+        recorded_date: row.recorded_date,
+        stat_value: row.stat_value,
+        numeric_value: isNumeric ? numericValue : null,
+        is_numeric: isNumeric,
+        unit: row.unit || bucket.unit,
+        notes: row.notes,
+      };
+      bucket.points.push(point);
+
+      if (!bucket.latest || new Date(row.recorded_date || 0) >= new Date(bucket.latest.recorded_date || 0)) {
+        bucket.latest = point;
+      }
+      if (isNumeric && (!bucket.personal_best || numericValue > bucket.personal_best.numeric_value)) {
+        bucket.personal_best = point;
+      }
+    }
+
+    const series = Array.from(byMetric.values()).map(metricBucket => ({
+      metric: metricBucket.metric,
+      unit: metricBucket.unit,
+      latest: metricBucket.latest,
+      personal_best: metricBucket.personal_best,
+      points: metricBucket.points,
+    }));
+
+    return res.json({
+      success: true,
+      data: {
+        metrics: series.map(s => s.metric),
+        series,
+      },
+    });
+  } catch (err) {
+    console.error('Stats series fetch error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to fetch stats series.' });
+  }
+});
+
+// ──────────────────────────────────────────────────────────
 //  DELETE /api/athlete/stats/:id
 // ──────────────────────────────────────────────────────────
 router.delete('/stats/:id', async (req, res) => {

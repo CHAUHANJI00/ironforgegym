@@ -162,6 +162,9 @@
       <button class="sidebar-link" onclick="showTab('stats')" id="nav_stats">
         <span class="icon">📈</span> Performance Stats
       </button>
+      <button class="sidebar-link" onclick="showTab('analytics')" id="nav_analytics">
+        <span class="icon">🧭</span> Analytics
+      </button>
       <button class="sidebar-link" onclick="showTab('training')" id="nav_training">
         <span class="icon">🎯</span> Training Details
       </button>
@@ -230,6 +233,7 @@
       <button class="tab-btn" onclick="showTab('sports')" data-tab="sports">🏋️ Sports</button>
       <button class="tab-btn" onclick="showTab('achievements')" data-tab="achievements">🏆 Achievements</button>
       <button class="tab-btn" onclick="showTab('stats')" data-tab="stats">📈 Stats</button>
+      <button class="tab-btn" onclick="showTab('analytics')" data-tab="analytics">🧭 Analytics</button>
       <button class="tab-btn" onclick="showTab('training')" data-tab="training">🎯 Training</button>
       <button class="tab-btn" onclick="showTab('contact')" data-tab="contact">📞 Contact</button>
       <button class="tab-btn" onclick="showTab('security')" data-tab="security">🔐 Security</button>
@@ -396,6 +400,36 @@
         <div id="statsTable">
           <div class="empty-state"><span class="empty-icon">📊</span><p>No stats recorded yet. Track your first PR!</p></div>
         </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: ANALYTICS ═══════════════════════ -->
+    <div class="tab-panel" id="panel_analytics">
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-title">🧭 Performance Analytics</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:1rem; margin-bottom:1rem;">
+          <div class="form-group">
+            <label class="form-label">Metric</label>
+            <select class="form-control" id="analyticsMetric"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date Range</label>
+            <select class="form-control" id="analyticsRange">
+              <option value="all">All Time</option>
+              <option value="30">Last 30 Days</option>
+              <option value="90">Last 90 Days</option>
+              <option value="180">Last 180 Days</option>
+              <option value="365">Last 365 Days</option>
+            </select>
+          </div>
+        </div>
+        <div id="analyticsMeta" class="text-gray" style="margin-bottom:1rem; font-size:.88rem;">Loading analytics…</div>
+        <div id="analyticsChartWrap" style="background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1rem;">
+          <svg id="analyticsChart" viewBox="0 0 820 280" style="width:100%; height:auto; display:block;"></svg>
+        </div>
+        <div id="analyticsTable" style="margin-top:1rem;"></div>
       </div>
     </div>
 
@@ -607,6 +641,7 @@
   requireAuth('login.html');
 
   let profileData = {};
+  let statsSeriesData = { metrics: [], series: [] };
 
   // ── Tabs ────────────────────────────────────
   function showTab(name) {
@@ -631,6 +666,7 @@
       const data = await apiFetch('/athlete/profile');
       profileData = data.data;
       populateAll(profileData);
+      await loadStatsSeries();
       document.getElementById('pageLoader').style.display = 'none';
       document.getElementById('mainContent').style.display = 'block';
     } catch (err) {
@@ -840,6 +876,111 @@
           <span style="color:${c.done?'var(--success)':'var(--gray2)'}; font-size:.9rem;">${c.done?'✓':'○'}</span>
           ${c.label}
         </div>`).join('')}`;
+  }
+
+
+  async function loadStatsSeries() {
+    try {
+      const response = await apiFetch('/athlete/stats/series');
+      statsSeriesData = response.data || { metrics: [], series: [] };
+    } catch (err) {
+      statsSeriesData = { metrics: [], series: [] };
+      toast('Could not load analytics data.', 'warning');
+    }
+    initializeAnalyticsPanel();
+  }
+
+  function initializeAnalyticsPanel() {
+    const metricSelect = document.getElementById('analyticsMetric');
+    const rangeSelect = document.getElementById('analyticsRange');
+    if (!metricSelect || !rangeSelect) return;
+
+    const metrics = statsSeriesData.metrics || [];
+    metricSelect.innerHTML = metrics.length
+      ? metrics.map(metric => `<option value="${metric}">${metric}</option>`).join('')
+      : '<option value="">No metrics available</option>' ;
+
+    metricSelect.onchange = renderAnalytics;
+    rangeSelect.onchange = renderAnalytics;
+    renderAnalytics();
+  }
+
+  function renderAnalytics() {
+    const metricSelect = document.getElementById('analyticsMetric');
+    const rangeSelect = document.getElementById('analyticsRange');
+    const metaEl = document.getElementById('analyticsMeta');
+    const tableEl = document.getElementById('analyticsTable');
+    if (!metricSelect || !rangeSelect || !metaEl || !tableEl) return;
+
+    const selectedMetric = metricSelect.value;
+    const metricData = (statsSeriesData.series || []).find(s => s.metric === selectedMetric);
+    if (!metricData) {
+      metaEl.textContent = 'No metric data available yet.';
+      tableEl.innerHTML = '<p class="text-muted" style="font-size:.88rem;">Add stats to see analytics.</p>' ;
+      renderSimpleLineChart([]);
+      return;
+    }
+
+    const rangeDays = rangeSelect.value === 'all' ? null : Number(rangeSelect.value);
+    const cutoff = rangeDays ? new Date(Date.now() - (rangeDays * 24 * 60 * 60 * 1000)) : null;
+    const filteredPoints = (metricData.points || []).filter(p => !cutoff || new Date(p.recorded_date) >= cutoff);
+    const numericPoints = filteredPoints.filter(p => p.is_numeric && typeof p.numeric_value === 'number');
+
+    const latest = metricData.latest;
+    const best = metricData.personal_best;
+    metaEl.innerHTML = `Latest: <strong>${latest ? `${latest.stat_value} ${latest.unit || ''}` : '—'}</strong> · Personal Best: <strong>${best ? `${best.stat_value} ${best.unit || ''}` : 'No numeric value yet'}</strong> · Points: <strong>${filteredPoints.length}</strong> (numeric: ${numericPoints.length})`;
+
+    renderSimpleLineChart(numericPoints);
+
+    tableEl.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Value</th><th>Unit</th><th>Type</th><th>Notes</th></tr></thead>
+        <tbody>
+          ${filteredPoints.length ? filteredPoints.map(p => `
+            <tr>
+              <td>${fmtDate(p.recorded_date)}</td>
+              <td><strong>${p.stat_value}</strong></td>
+              <td>${p.unit || '—'}</td>
+              <td>${p.is_numeric ? '<span class="badge badge-green">Numeric</span>' : '<span class="badge badge-gray">Non-numeric</span>'}</td>
+              <td style="color:var(--gray); font-size:.82rem;">${p.notes || '—'}</td>
+            </tr>
+          `).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--gray);">No records in selected date range.</td></tr>'}
+        </tbody>
+      </table>`;
+  }
+
+  function renderSimpleLineChart(points) {
+    const svg = document.getElementById('analyticsChart');
+    if (!svg) return;
+
+    const width = 820;
+    const height = 280;
+    const pad = { top: 20, right: 20, bottom: 34, left: 46 };
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+    if (!points || points.length < 2) {
+      svg.innerHTML = `<text x="${width/2}" y="${height/2}" fill="#9a9a9a" text-anchor="middle" font-size="14">Need at least 2 numeric points to render chart</text>`;
+      return;
+    }
+
+    const values = points.map(p => p.numeric_value);
+    const minV = Math.min(...values);
+    const maxV = Math.max(...values);
+    const span = maxV - minV || 1;
+
+    const toX = i => pad.left + (i / (points.length - 1)) * (width - pad.left - pad.right);
+    const toY = v => pad.top + (1 - ((v - minV) / span)) * (height - pad.top - pad.bottom);
+
+    const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${toX(i)} ${toY(p.numeric_value)}`).join(' ');
+    const circles = points.map((p, i) => `<circle cx="${toX(i)}" cy="${toY(p.numeric_value)}" r="3" fill="#e05c1a"></circle>`).join('');
+
+    svg.innerHTML = `
+      <line x1="${pad.left}" y1="${height-pad.bottom}" x2="${width-pad.right}" y2="${height-pad.bottom}" stroke="#444" />
+      <line x1="${pad.left}" y1="${pad.top}" x2="${pad.left}" y2="${height-pad.bottom}" stroke="#444" />
+      <path d="${path}" fill="none" stroke="#e05c1a" stroke-width="2.5" />
+      ${circles}
+      <text x="${pad.left}" y="${pad.top-6}" fill="#aaa" font-size="11">Normalized scale</text>
+    `;
   }
 
   // ── Save handlers ────────────────────────────
