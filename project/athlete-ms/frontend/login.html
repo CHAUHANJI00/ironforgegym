@@ -122,8 +122,18 @@
   // Check expired session
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('expired') === '1') {
-    document.getElementById('alertBox').innerHTML =
-      '<div class="alert alert-warning">⚠ Session expired. Please sign in again.</div>';
+    renderAlert('⚠ Session expired. Please sign in again.', 'warning');
+  }
+
+
+  function renderAlert(msg, type = 'error') {
+    const box = document.getElementById('alertBox');
+    box.textContent = '';
+    if (!msg) return;
+    const el = document.createElement('div');
+    el.className = `alert ${type === 'warning' ? 'alert-warning' : 'alert-error'}`;
+    el.textContent = msg;
+    box.appendChild(el);
   }
 
   redirectIfLoggedIn('profile.html');
@@ -162,7 +172,7 @@
 
     const btn = document.getElementById('submitBtn');
     setLoading(btn, true);
-    document.getElementById('alertBox').innerHTML = '';
+    renderAlert('');
 
     try {
       const data = await apiFetch('/auth/login', {
@@ -175,8 +185,8 @@
       toast(`Welcome back, ${data.user.full_name.split(' ')[0]}! 🔥`, 'success');
       setTimeout(() => window.location.href = 'profile.html', 1000);
     } catch (err) {
-      const msg = err.errors ? err.errors.map(e=>e.msg).join('<br>') : (err.message || 'Login failed. Check your credentials.');
-      document.getElementById('alertBox').innerHTML = `<div class="alert alert-error">${msg}</div>`;
+      const msg = err.errors ? err.errors.map(e => e.msg).join(' | ') : (err.message || 'Login failed. Check your credentials.');
+      renderAlert(msg);
     } finally {
       setLoading(btn, false, 'Sign In');
     }

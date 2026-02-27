@@ -154,6 +154,17 @@
     document.getElementById('strengthLabel').style.color = colors[score];
   });
 
+
+  function renderAlert(msg) {
+    const box = document.getElementById('alertBox');
+    box.textContent = '';
+    if (!msg) return;
+    const el = document.createElement('div');
+    el.className = 'alert alert-error';
+    el.textContent = msg;
+    box.appendChild(el);
+  }
+
   // Form submit
   document.getElementById('signupForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -183,7 +194,7 @@
 
     const btn = document.getElementById('submitBtn');
     setLoading(btn, true);
-    document.getElementById('alertBox').innerHTML = '';
+    renderAlert('');
 
     try {
       const data = await apiFetch('/auth/signup', {
@@ -196,8 +207,8 @@
       toast('Account created! Redirecting to your profile…', 'success');
       setTimeout(() => window.location.href = 'profile.html', 1200);
     } catch (err) {
-      const msg = err.errors ? err.errors.map(e=>e.msg).join('<br>') : (err.message || 'Signup failed.');
-      document.getElementById('alertBox').innerHTML = `<div class="alert alert-error">${msg}</div>`;
+      const msg = err.errors ? err.errors.map(e => e.msg).join(' | ') : (err.message || 'Signup failed.');
+      renderAlert(msg);
     } finally {
       setLoading(btn, false, 'Create Account');
     }
