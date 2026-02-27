@@ -1,10 +1,9 @@
-// backend/config/db.js
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 const pool = mysql.createPool({
   host:               process.env.DB_HOST     || 'localhost',
-  port:               parseInt(process.env.DB_PORT || '3306'),
+  port:               parseInt(process.env.DB_PORT || '3306', 10),
   user:               process.env.DB_USER     || 'root',
   password:           process.env.DB_PASSWORD || '',
   database:           process.env.DB_NAME     || 'athlete_management',
@@ -15,16 +14,28 @@ const pool = mysql.createPool({
   charset:            'utf8mb4',
 });
 
-// Test connection on startup
-(async () => {
+let dbHealthy = false;
+let lastDbError = null;
+
+async function checkDbHealth() {
   try {
     const conn = await pool.getConnection();
-    console.log('✅  MySQL connected successfully');
     conn.release();
+    dbHealthy = true;
+    lastDbError = null;
   } catch (err) {
-    console.error('❌  MySQL connection failed:', err.message);
-    process.exit(1);
+    dbHealthy = false;
+    lastDbError = err.message;
+    console.error('❌  MySQL connection check failed:', err.message);
   }
-})();
+  return dbHealthy;
+}
 
-module.exports = pool;
+// Initial check without hard-crashing process.
+checkDbHealth();
+
+module.exports = {
+  pool,
+  checkDbHealth,
+  getDbHealth: () => ({ healthy: dbHealthy, error: lastDbError }),
+};

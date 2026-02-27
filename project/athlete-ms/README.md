@@ -63,6 +63,11 @@ source backend/schema.sql;
 
 Or copy-paste the contents of `backend/schema.sql` into MySQL Workbench / HeidiSQL / phpMyAdmin.
 
+(Optional for local demo admin account):
+```sql
+source backend/seed.dev.sql;
+```
+
 ### 3. Configure environment variables
 
 ```bash

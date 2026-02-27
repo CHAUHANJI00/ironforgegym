@@ -86,7 +86,8 @@ CREATE TABLE IF NOT EXISTS achievements (
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_user_id (user_id)
+  INDEX idx_user_id (user_id),
+  INDEX idx_user_award_date (user_id, award_date)
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -103,7 +104,9 @@ CREATE TABLE IF NOT EXISTS performance_stats (
   created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_user_id (user_id)
+  INDEX idx_user_id (user_id),
+  INDEX idx_user_recorded_date (user_id, recorded_date),
+  INDEX idx_user_stat_name_date (user_id, stat_name, recorded_date)
 ) ENGINE=InnoDB;
 
 -- ─────────────────────────────────────────────
@@ -126,14 +129,3 @@ CREATE TABLE IF NOT EXISTS training_details (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
--- ─────────────────────────────────────────────
---  SAMPLE SEED DATA (optional — remove in prod)
--- ─────────────────────────────────────────────
--- Admin user  (password: Admin@1234)
-INSERT IGNORE INTO users (full_name, email, password_hash, role)
-VALUES (
-  'Iron Forge Admin',
-  'admin@ironforgegym.com',
-  '$2a$12$Ynq5Z8t.QpIIGkq5uRoRxuGm2leMpD6PZi9f/fNmNijTn4yqn6Vgy',
-  'admin'
-);
