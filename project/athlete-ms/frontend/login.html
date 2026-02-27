@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Iron Forge AMS</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { display:flex; min-height:100vh; align-items:center; justify-content:center; }
+    .login-wrapper { display:grid; grid-template-columns:1fr 1fr; min-height:100vh; width:100%; }
+    .login-visual {
+      background: linear-gradient(145deg, #0d0d0d 0%, #1a0a00 50%, #0d0d0d 100%);
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:4rem; position:relative; overflow:hidden;
+    }
+    .login-visual::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse 60% 60% at 50% 50%, rgba(224,92,26,.15) 0%,transparent 70%);
+    }
+    .login-visual-content { position:relative; z-index:1; text-align:center; }
+    .forge-icon { font-size:7rem; display:block; margin-bottom:1.5rem; filter:drop-shadow(0 0 30px rgba(224,92,26,.4)); }
+    .login-visual h2 { margin-bottom:1rem; font-size:3rem; }
+    .login-visual p  { color:var(--gray); max-width:340px; font-weight:300; line-height:1.7; }
+    .login-tagline  { font-family:'Barlow Condensed',sans-serif; letter-spacing:5px; font-size:.85rem; color:var(--orange); text-transform:uppercase; margin-top:1.5rem; }
+
+    .login-form-panel {
+      background:var(--black); display:flex; align-items:center; justify-content:center;
+      padding:4rem 3rem;
+    }
+    .login-box { width:100%; max-width:420px; }
+    .login-logo { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; margin-bottom:2rem; }
+    .login-logo span { color:var(--orange); }
+    .login-title    { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; margin-bottom:.4rem; }
+    .login-subtitle { color:var(--gray); font-size:.95rem; margin-bottom:2rem; }
+
+    .password-wrapper { position:relative; }
+    .password-toggle  { position:absolute; right:1rem; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray); cursor:pointer; font-size:.9rem; padding:.2rem; }
+    .password-toggle:hover { color:var(--orange); }
+
+    .demo-box { background:rgba(224,92,26,.06); border:1px solid rgba(224,92,26,.2); border-radius:var(--radius); padding:1rem 1.2rem; margin-bottom:1.5rem; }
+    .demo-box p { font-size:.82rem; color:var(--gray); margin-bottom:.4rem; }
+    .demo-box code { font-size:.8rem; color:var(--orange); background:rgba(224,92,26,.1); padding:.1rem .4rem; border-radius:3px; }
+
+    @media(max-width:768px) {
+      .login-wrapper { grid-template-columns:1fr; }
+      .login-visual  { display:none; }
+      .login-form-panel { padding:5rem 1.5rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-wrapper">
+  <!-- LEFT VISUAL -->
+  <div class="login-visual">
+    <div class="login-visual-content">
+      <span class="forge-icon">⚒️</span>
+      <h2>WELCOME BACK</h2>
+      <p>Sign in to access your athlete dashboard, track performance, and manage your training journey.</p>
+      <p class="login-tagline">Strength · Craft · Endurance</p>
+    </div>
+  </div>
+
+  <!-- RIGHT FORM -->
+  <div class="login-form-panel">
+    <div class="login-box">
+      <div class="login-logo">⚒️ IRON <span>FORGE</span></div>
+      <h1 class="login-title">SIGN IN</h1>
+      <p class="login-subtitle">New to Iron Forge? <a href="signup.html">Create account →</a></p>
+
+      <div id="alertBox"></div>
+
+      <!-- Demo credentials helper -->
+      <div class="demo-box" id="demoBox">
+        <p><strong style="color:var(--white);">💡 Testing?</strong> Use seeded admin credentials:</p>
+        <p>Email: <code>admin@ironforgegym.com</code> &nbsp; Password: <code>Admin@1234</code></p>
+        <button onclick="fillDemo()" class="btn btn-ghost btn-sm mt-1" style="font-size:.75rem;">Fill Demo Credentials</button>
+      </div>
+
+      <form id="loginForm" novalidate>
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="email" class="form-control" placeholder="your@email.com" required autocomplete="email">
+            <span class="form-error hidden" id="err_email"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" style="display:flex; justify-content:space-between;">
+              <span>Password</span>
+              <a href="#" style="font-size:.75rem; color:var(--gray);">Forgot password?</a>
+            </label>
+            <div class="password-wrapper">
+              <input type="password" id="password" class="form-control" placeholder="Your password" required autocomplete="current-password">
+              <button type="button" class="password-toggle" id="togglePass">👁</button>
+            </div>
+            <span class="form-error hidden" id="err_pass"></span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:.7rem;">
+            <input type="checkbox" id="remember" style="accent-color:var(--orange);">
+            <label for="remember" style="font-size:.88rem; color:var(--gray); cursor:pointer;">Keep me signed in</label>
+          </div>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary btn-full" style="margin-top:.5rem;">
+            Sign In
+          </button>
+
+          <p style="text-align:center; color:var(--gray); font-size:.88rem;">
+            Don't have an account? <a href="signup.html">Sign up free →</a>
+          </p>
+
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  // Check expired session
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('expired') === '1') {
+    document.getElementById('alertBox').innerHTML =
+      '<div class="alert alert-warning">⚠ Session expired. Please sign in again.</div>';
+  }
+
+  redirectIfLoggedIn('profile.html');
+
+  // Password visibility
+  document.getElementById('togglePass').addEventListener('click', () => {
+    const input = document.getElementById('password');
+    input.type = input.type === 'password' ? 'text' : 'password';
+    document.getElementById('togglePass').textContent = input.type === 'password' ? '👁' : '🙈';
+  });
+
+  // Demo fill
+  function fillDemo() {
+    document.getElementById('email').value    = 'admin@ironforgegym.com';
+    document.getElementById('password').value = 'Admin@1234';
+    toast('Demo credentials filled!', 'info');
+  }
+
+  // Form submit
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let valid = true;
+
+    const clearErr = id => { document.getElementById(id).classList.add('hidden'); };
+    const showErr  = (id, msg) => { const el = document.getElementById(id); el.textContent=msg; el.classList.remove('hidden'); valid=false; };
+
+    clearErr('err_email'); clearErr('err_pass');
+
+    const email = document.getElementById('email').value.trim();
+    const pass  = document.getElementById('password').value;
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) showErr('err_email', 'Valid email is required.');
+    if (!pass) showErr('err_pass', 'Password is required.');
+
+    if (!valid) return;
+
+    const btn = document.getElementById('submitBtn');
+    setLoading(btn, true);
+    document.getElementById('alertBox').innerHTML = '';
+
+    try {
+      const data = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password: pass }),
+      });
+
+      Auth.setToken(data.token);
+      Auth.setUser(data.user);
+      toast(`Welcome back, ${data.user.full_name.split(' ')[0]}! 🔥`, 'success');
+      setTimeout(() => window.location.href = 'profile.html', 1000);
+    } catch (err) {
+      const msg = err.errors ? err.errors.map(e=>e.msg).join('<br>') : (err.message || 'Login failed. Check your credentials.');
+      document.getElementById('alertBox').innerHTML = `<div class="alert alert-error">${msg}</div>`;
+    } finally {
+      setLoading(btn, false, 'Sign In');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iron Forge — Athlete Management System</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ── HERO ─────────────────────────────────── */
+    #hero {
+      min-height:100vh; display:flex; align-items:center;
+      position:relative; overflow:hidden; padding:6rem 0 4rem;
+    } 
+    .hero-bg {
+      position:absolute; inset:0;
+      background: radial-gradient(ellipse 65% 80% at 65% 50%, rgba(224,92,26,.09) 0%,transparent 70%),
+                  radial-gradient(ellipse 40% 50% at 10% 80%, rgba(224,92,26,.05) 0%,transparent 60%);
+    }
+    .hero-grid {
+      position:absolute; inset:0;
+      background-image: linear-gradient(rgba(224,92,26,.04) 1px,transparent 1px),
+                        linear-gradient(90deg,rgba(224,92,26,.04) 1px,transparent 1px);
+      background-size:60px 60px;
+    }
+    .hero-content { position:relative; z-index:2; max-width:680px; animation:fadeUp 0.8s both; }
+    .hero-eyebrow { font-family:'Barlow Condensed',sans-serif; font-size:.78rem; letter-spacing:5px; color:var(--orange); text-transform:uppercase; margin-bottom:1.2rem; }
+    .hero-title   { font-family:'Bebas Neue',sans-serif; font-size:clamp(4.5rem,11vw,9rem); line-height:.9; margin-bottom:1.5rem; }
+    .hero-title .accent  { color:var(--orange); }
+    .hero-title .outline { -webkit-text-stroke:1.5px var(--white); color:transparent; }
+    .hero-sub     { color:#aaa; font-size:1.05rem; line-height:1.75; max-width:500px; margin-bottom:2.5rem; }
+    .hero-btns    { display:flex; gap:1rem; flex-wrap:wrap; }
+    .hero-stats   { display:flex; gap:3rem; margin-top:3.5rem; flex-wrap:wrap; }
+    .stat-n { font-family:'Bebas Neue',sans-serif; font-size:2.8rem; color:var(--orange); line-height:1; }
+    .stat-l { font-family:'Barlow Condensed',sans-serif; font-size:.7rem; letter-spacing:3px; color:var(--gray); text-transform:uppercase; }
+
+    /* ── ABOUT ────────────────────────────────── */
+    #about { background:var(--dark); }
+    .about-grid { display:grid; grid-template-columns:1fr 1fr; gap:5rem; align-items:center; }
+    .about-visual {
+      background:linear-gradient(135deg,#1a0a00,#2d1800); aspect-ratio:1;
+      display:flex; align-items:center; justify-content:center; font-size:9rem;
+      border:1px solid var(--border); border-radius:var(--radius);
+      position:relative; overflow:hidden;
+    }
+    .about-visual::after {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(circle at 60% 60%, rgba(224,92,26,.18) 0%, transparent 60%);
+    }
+    .value-cards { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:2rem; }
+    .value-card  { background:var(--card); padding:1.5rem; }
+    .value-num   { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; color:rgba(224,92,26,.12); }
+    .value-name  { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; color:var(--white); }
+    .value-desc  { color:#777; font-size:.85rem; margin-top:.3rem; font-weight:300; }
+
+    /* ── FEATURES ─────────────────────────────── */
+    #features { background:var(--black); }
+    .feature-card {
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      padding:2rem; transition:var(--transition); position:relative; overflow:hidden;
+    }
+    .feature-card::before {
+      content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+      background:var(--orange); transform:scaleX(0); transition:transform .3s; transform-origin:left;
+    }
+    .feature-card:hover { border-color:var(--orange); transform:translateY(-4px); }
+    .feature-card:hover::before { transform:scaleX(1); }
+    .feature-icon { font-size:2.2rem; margin-bottom:1rem; display:block; }
+    .feature-title { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; margin-bottom:.5rem; }
+    .feature-desc  { color:#777; font-size:.9rem; line-height:1.6; font-weight:300; }
+
+    /* ── PLANS PREVIEW ────────────────────────── */
+    #plans { background:var(--dark); }
+    .plan-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:2.5rem; text-align:center; transition:var(--transition); }
+    .plan-card.popular { border-color:var(--orange); transform:translateY(-6px); }
+    .plan-name  { font-family:'Bebas Neue',sans-serif; font-size:1.2rem; letter-spacing:3px; color:var(--gray); margin-bottom:1rem; }
+    .plan-price { font-family:'Bebas Neue',sans-serif; font-size:3.8rem; color:var(--white); line-height:1; }
+    .plan-price sup { font-size:1.8rem; vertical-align:top; margin-top:.5rem; display:inline-block; }
+    .plan-period{ color:var(--gray); font-size:.85rem; margin-bottom:1.5rem; }
+    .plan-feats { list-style:none; text-align:left; display:flex; flex-direction:column; gap:.6rem; margin:1.5rem 0; }
+    .plan-feats li { font-size:.88rem; color:#aaa; font-weight:300; display:flex; align-items:center; gap:.5rem; }
+    .plan-feats li::before { content:'✓'; color:var(--orange); font-weight:700; flex-shrink:0; }
+    .plan-card.popular .plan-feats li::before { color:var(--gold); }
+
+    /* ── CTA SECTION ──────────────────────────── */
+    #cta { background:var(--orange); padding:5rem 0; text-align:center; }
+    #cta h2 { color:#fff; margin-bottom:1rem; }
+    #cta p  { color:rgba(255,255,255,.85); max-width:500px; margin:0 auto 2rem; }
+    #cta .btn-primary { background:#fff; color:var(--orange); }
+    #cta .btn-primary:hover { background:#000; color:#fff; }
+    #cta .btn-outline { border-color:rgba(255,255,255,.5); color:#fff; }
+    #cta .btn-outline:hover { border-color:#fff; }
+
+    /* ── HAMBURGER ────────────────────────────── */
+    .nav-hamburger { display:none; flex-direction:column; gap:5px; background:none; border:none; cursor:pointer; padding:.3rem; }
+    .nav-hamburger span { width:24px; height:2px; background:var(--white); display:block; transition:.3s; }
+    @media(max-width:768px) {
+      .navbar-menu { display:none; flex-direction:column; position:absolute; top:100%; left:0; right:0; background:rgba(10,10,10,.98); padding:1rem 1.5rem; border-bottom:1px solid var(--border); }
+      .navbar-menu.open { display:flex; }
+      .nav-hamburger { display:flex; }
+      .about-grid { grid-template-columns:1fr; gap:2.5rem; }
+      .hero-stats { gap:2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── NAVBAR ──────────────────────────────────── -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">
+    <span style="font-size:1.8rem">⚒️</span> IRON <span>FORGE</span>
+  </a>
+  <ul class="navbar-menu" id="navMenu">
+    <li><a href="#about">About</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#plans">Plans</a></li>
+    <li><a href="login.html">Login</a></li>
+  </ul>
+  <div class="navbar-actions">
+    <a href="login.html"  class="btn btn-outline btn-sm">Login</a>
+    <a href="signup.html" class="btn btn-primary btn-sm">Sign Up</a>
+  </div>
+  <button class="nav-hamburger" id="hamburger" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ── HERO ─────────────────────────────────────── -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="container">
+    <div class="hero-content">
+      <p class="hero-eyebrow">Iron Forge &nbsp;·&nbsp; Athlete Management System</p>
+      <h1 class="hero-title">
+        FORGE<br>
+        YOUR<br>
+        <span class="accent">PATH</span>
+      </h1>
+      <p class="hero-sub">The complete platform for athletes to track performance, manage achievements, and grow with elite coaching. Strength. Craft. Endurance.</p>
+      <div class="hero-btns">
+        <a href="signup.html" class="btn btn-primary">Get Started Free</a>
+        <a href="#features"   class="btn btn-outline">Explore Features</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-n">500+</div><div class="stat-l">Athletes</div></div>
+        <div><div class="stat-n">4</div><div class="stat-l">Expert Coaches</div></div>
+        <div><div class="stat-n">10K</div><div class="stat-l">Sq Ft Facility</div></div>
+        <div><div class="stat-n">6 Yrs</div><div class="stat-l">Excellence</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MARQUEE ───────────────────────────────────── -->
+<div class="marquee-bar">
+  <div class="marquee-inner">
+    <span class="marquee-item">ATHLETE PROFILES ⚒️</span>
+    <span class="marquee-item">PERFORMANCE TRACKING ⚒️</span>
+    <span class="marquee-item">ACHIEVEMENT MANAGEMENT ⚒️</span>
+    <span class="marquee-item">TRAINING PLANS ⚒️</span>
+    <span class="marquee-item">SECURE AUTHENTICATION ⚒️</span>
+    <span class="marquee-item">REAL-TIME STATS ⚒️</span>
+    <span class="marquee-item">ATHLETE PROFILES ⚒️</span>
+    <span class="marquee-item">PERFORMANCE TRACKING ⚒️</span>
+    <span class="marquee-item">ACHIEVEMENT MANAGEMENT ⚒️</span>
+    <span class="marquee-item">TRAINING PLANS ⚒️</span>
+    <span class="marquee-item">SECURE AUTHENTICATION ⚒️</span>
+    <span class="marquee-item">REAL-TIME STATS ⚒️</span>
+  </div>
+</div>
+
+<!-- ── ABOUT ─────────────────────────────────────── -->
+<section id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-visual">🏋️</div>
+      <div>
+        <span class="label">Our Story</span>
+        <h2 style="margin-bottom:1rem;">IRON HERITAGE</h2>
+        <p class="text-gray mb-3">Iron Forge draws its name from the ancient art of iron forging — a craft built on patience, precision, and raw power. We believe the most powerful things are shaped under pressure — just like iron in the forge.</p>
+        <p class="text-gray mb-3">From athletes to creators, Iron Forge empowers individuals who push limits and forge their own path. Your name is your mark — our platform helps you build and own your identity with power and authenticity.</p>
+        <div class="value-cards animate-in">
+          <div class="value-card"><div class="value-num">01</div><div class="value-name">STRENGTH</div><div class="value-desc">Physical and mental resilience at the core of everything.</div></div>
+          <div class="value-card"><div class="value-num">02</div><div class="value-name">PRECISION</div><div class="value-desc">Every detail matters. We craft with uncompromising accuracy.</div></div>
+          <div class="value-card"><div class="value-num">03</div><div class="value-name">ENDURANCE</div><div class="value-desc">True iron doesn't crack under pressure — it hardens.</div></div>
+          <div class="value-card"><div class="value-num">04</div><div class="value-name">IDENTITY</div><div class="value-desc">Build and own your identity with power and authenticity.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FEATURES ──────────────────────────────────── -->
+<section id="features">
+  <div class="container">
+    <div class="section-header centered animate-in">
+      <span class="label">Platform Features</span>
+      <h2>EVERYTHING YOU NEED</h2>
+    </div>
+    <div class="grid-3">
+      <div class="feature-card animate-in">
+        <span class="feature-icon">🔐</span>
+        <div class="feature-title">SECURE AUTH</div>
+        <p class="feature-desc">Your account is protected with secure login and encrypted passwords, so your personal data stays safe and private.</p>
+      </div>
+      <div class="feature-card animate-in">
+        <span class="feature-icon">👤</span>
+        <div class="feature-title">ATHLETE PROFILE</div>
+        <p class="feature-desc">Complete personal, physical, and sports information all in one beautiful dashboard.</p>
+      </div>
+      <div class="feature-card animate-in">
+        <span class="feature-icon">🏆</span>
+        <div class="feature-title">ACHIEVEMENTS</div>
+        <p class="feature-desc">Log and showcase your medals, titles, and milestones from local to international level.</p>
+      </div>
+      <div class="feature-card animate-in">
+        <span class="feature-icon">📊</span>
+        <div class="feature-title">PERFORMANCE STATS</div>
+        <p class="feature-desc">Track your personal records, test results, and performance metrics over time.</p>
+      </div>
+      <div class="feature-card animate-in">
+        <span class="feature-icon">🎯</span>
+        <div class="feature-title">TRAINING DETAILS</div>
+        <p class="feature-desc">Record training schedule, goals, diet, supplements, and recovery methods.</p>
+      </div>
+      <div class="feature-card animate-in">
+        <span class="feature-icon">📱</span>
+        <div class="feature-title">RESPONSIVE DESIGN</div>
+        <p class="feature-desc">Access your profile from any device — desktop, tablet, or mobile seamlessly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MEMBERSHIP PLANS ───────────────────────────── -->
+<section id="plans">
+  <div class="container">
+    <div class="section-header centered animate-in">
+      <span class="label">Membership Plans</span>
+      <h2>CHOOSE YOUR PATH</h2>
+      <p class="text-gray mt-2">All plans include full access to the Athlete Management Platform</p>
+    </div>
+    <div class="grid-3">
+      <div class="plan-card animate-in">
+        <div class="plan-name">IRON STARTER</div>
+        <div class="plan-price"><sup>₹</sup>999</div>
+        <div class="plan-period">per month</div>
+        <ul class="plan-feats">
+          <li>Athlete profile dashboard</li>
+          <li>Gym floor access</li>
+          <li>1 group class / week</li>
+          <li>Basic fitness assessment</li>
+          <li>Performance tracking</li>
+          <li>GYM mobile app</li>
+        </ul>
+        <a href="signup.html" class="btn btn-outline btn-full">Get Started</a>
+      </div>
+      <div class="plan-card popular animate-in">
+        <div style="margin-bottom:.5rem;"><span class="badge badge-gold">⭐ Most Popular</span></div>
+        <div class="plan-name">IRON FORGE</div>
+        <div class="plan-price"><sup>₹</sup>1,999</div>
+        <div class="plan-period">per month</div>
+        <ul class="plan-feats">
+          <li>Full gym access</li>
+          <li>All group classes</li>
+          <li>Steam room access</li>
+          <li>Monthly fitness check-in</li>
+          <li>10% nutrition discount</li>
+          <li>GYM branded gear kit</li>
+        </ul>
+        <a href="signup.html" class="btn btn-primary btn-full">Join Now</a>
+      </div>
+      <div class="plan-card animate-in">
+        <div style="margin-bottom:.5rem;"><span class="badge badge-gray">👑 Premium</span></div>
+        <div class="plan-name">IRON ELITE</div>
+        <div class="plan-price"><sup>₹</sup>3,499</div>
+        <div class="plan-period">per month</div>
+        <ul class="plan-feats">
+          <li>Everything in Pro</li>
+          <li>Personal trainer (4/month)</li>
+          <li>Custom nutrition plan</li>
+          <li>Priority booking</li>
+          <li>Guest passes × 2/month</li>
+          <li>Monthly body composition scan</li>
+        </ul>
+        <a href="signup.html" class="btn btn-outline btn-full">Go Elite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ────────────────────────────────────────── -->
+<section id="cta">
+  <div class="container">
+    <h2>READY TO FORGE YOUR LEGEND?</h2>
+    <p>Join 500+ athletes who are already tracking their journey on Iron Forge. Sign up free today.</p>
+    <div class="flex-center gap-2">
+      <a href="signup.html" class="btn btn-primary">Create Free Account</a>
+      <a href="login.html"  class="btn btn-outline">Sign In</a>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ─────────────────────────────────────── -->
+<footer>
+  <div class="footer-brand">IRON <span>FORGE</span></div>
+  <ul class="footer-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="signup.html">Sign Up</a></li>
+    <li><a href="login.html">Login</a></li>
+    <li><a href="mailto:contact@ironforgegym.com">Contact</a></li>
+  </ul>
+  <div class="footer-copy">© 2025 Iron Forge GYM &nbsp;·&nbsp; www.ironforgegym.com</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script>
+  // Hamburger menu
+  document.getElementById('hamburger').addEventListener('click', () => {
+    document.getElementById('navMenu').classList.toggle('open');
+  });
+
+  // Active nav on scroll
+  window.addEventListener('scroll', () => {
+    const scrollY = window.scrollY;
+    document.querySelectorAll('section[id]').forEach(s => {
+      const top = s.offsetTop - 100;
+      if (scrollY >= top && scrollY < top + s.offsetHeight) {
+        document.querySelectorAll('.navbar-menu a').forEach(a => {
+          a.classList.toggle('active', a.getAttribute('href') === '#' + s.id);
+        });
+      }
+    });
+  });
+
+  // If already logged in, show dashboard link
+  if (Auth.isLoggedIn()) {
+    const actions = document.querySelector('.navbar-actions');
+    actions.innerHTML = `<a href="profile.html" class="btn btn-primary btn-sm">My Dashboard →</a>`;
+  }
+
+  initScrollAnimation();
+</script>
+</body>
+</html>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Iron Forge AMS</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    body { display:flex; flex-direction:column; min-height:100vh; }
+    .auth-wrapper {
+      flex:1; display:grid; grid-template-columns:1fr 1fr; min-height:100vh;
+    }
+    .auth-panel {
+      background:var(--dark); display:flex; align-items:center; justify-content:center;
+      padding:5rem 3rem; position:relative; overflow:hidden;
+    }
+    .auth-panel::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse 70% 70% at 30% 50%, rgba(224,92,26,.1) 0%,transparent 70%);
+    }
+    .auth-visual { position:relative; z-index:1; text-align:center; }
+    .auth-visual .big-icon { font-size:8rem; margin-bottom:2rem; display:block; }
+    .auth-visual h2 { margin-bottom:1rem; }
+    .auth-visual p  { color:var(--gray); max-width:360px; font-weight:300; line-height:1.7; }
+    .auth-benefits  { list-style:none; margin-top:2rem; display:flex; flex-direction:column; gap:.7rem; text-align:left; }
+    .auth-benefits li { display:flex; align-items:center; gap:.7rem; color:#ccc; font-size:.92rem; }
+    .auth-benefits li::before { content:'✓'; color:var(--orange); font-weight:700; }
+
+    .auth-form-panel {
+      background:var(--black); display:flex; align-items:center; justify-content:center;
+      padding:4rem 3rem;
+    }
+    .auth-box { width:100%; max-width:480px; }
+    .auth-logo { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:3px; margin-bottom:2.5rem; display:flex; align-items:center; gap:.6rem; }
+    .auth-logo span { color:var(--orange); }
+    .auth-title { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; margin-bottom:.5rem; }
+    .auth-subtitle { color:var(--gray); font-size:.95rem; margin-bottom:2rem; }
+    .strength-bar { height:4px; border-radius:2px; background:var(--border); margin-top:.4rem; overflow:hidden; }
+    .strength-fill { height:100%; border-radius:2px; transition:width .3s, background .3s; width:0; }
+    .strength-label { font-size:.75rem; margin-top:.3rem; }
+    @media(max-width:768px) {
+      .auth-wrapper { grid-template-columns:1fr; }
+      .auth-panel { display:none; }
+      .auth-form-panel { padding:3rem 1.5rem; padding-top:6rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <!-- LEFT PANEL -->
+  <div class="auth-panel">
+    <div class="auth-visual">
+      <span class="big-icon">⚒️</span>
+      <h2>JOIN THE FORGE</h2>
+      <p>Create your athlete profile and start tracking your journey to greatness. Built for champions like you.</p>
+      <ul class="auth-benefits">
+        <li>Complete athlete dashboard</li>
+        <li>Performance statistics & records</li>
+        <li>Achievement showcase</li>
+        <li>Training plan management</li>
+        <li>Secure & private profile</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: FORM -->
+  <div class="auth-form-panel">
+    <div class="auth-box">
+      <div class="auth-logo">⚒️ IRON <span>FORGE</span></div>
+      <h1 class="auth-title">CREATE ACCOUNT</h1>
+      <p class="auth-subtitle">Start your journey. Already have an account? <a href="login.html">Sign in →</a></p>
+
+      <div id="alertBox"></div>
+
+      <form id="signupForm" novalidate>
+        <div style="display:flex; flex-direction:column; gap:1rem;">
+
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" id="full_name" class="form-control" placeholder="Arjun Mehta" required>
+            <span class="form-error hidden" id="err_name"></span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Email Address *</label>
+              <input type="email" id="email" class="form-control" placeholder="arjun@example.com" required>
+              <span class="form-error hidden" id="err_email"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <select id="role" class="form-control">
+                <option value="athlete">🏋️ Athlete</option>
+                <option value="coach">🎯 Coach</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            <input type="password" id="password" class="form-control" placeholder="Min 8 chars, 1 uppercase, 1 number" required>
+            <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+            <div class="strength-label text-gray" id="strengthLabel"></div>
+            <span class="form-error hidden" id="err_pass"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            <input type="password" id="confirm_password" class="form-control" placeholder="Repeat your password" required>
+            <span class="form-error hidden" id="err_confirm"></span>
+          </div>
+
+          <div style="display:flex; align-items:flex-start; gap:.7rem; margin-top:.5rem;">
+            <input type="checkbox" id="agree" style="margin-top:3px; accent-color:var(--orange);">
+            <label for="agree" style="font-size:.88rem; color:var(--gray); cursor:pointer; line-height:1.5;">
+              I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+            </label>
+          </div>
+          <span class="form-error hidden" id="err_agree"></span>
+
+          <button type="submit" id="submitBtn" class="btn btn-primary btn-full" style="margin-top:.5rem;">
+            Create Account
+          </button>
+
+          <p style="text-align:center; color:var(--gray); font-size:.88rem;">
+            Already a member? <a href="login.html">Sign in here →</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script>
+  redirectIfLoggedIn('profile.html');
+
+  // Password strength
+  const passwordInput = document.getElementById('password');
+  passwordInput.addEventListener('input', () => {
+    const val = passwordInput.value;
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const colors = ['', '#ef4444', '#f59e0b', '#22c55e', '#16a34a'];
+    const labels = ['', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+    const fill = document.getElementById('strengthFill');
+    fill.style.width  = (score * 25) + '%';
+    fill.style.background = colors[score] || 'transparent';
+    document.getElementById('strengthLabel').textContent = labels[score] || '';
+    document.getElementById('strengthLabel').style.color = colors[score];
+  });
+
+  // Form submit
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let valid = true;
+
+    const clearErr = id => { document.getElementById(id).textContent=''; document.getElementById(id).classList.add('hidden'); };
+    const showErr  = (id, msg) => { document.getElementById(id).textContent=msg; document.getElementById(id).classList.remove('hidden'); valid=false; };
+
+    ['err_name','err_email','err_pass','err_confirm','err_agree'].forEach(clearErr);
+
+    const name  = document.getElementById('full_name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const pass  = document.getElementById('password').value;
+    const conf  = document.getElementById('confirm_password').value;
+    const role  = document.getElementById('role').value;
+    const agree = document.getElementById('agree').checked;
+
+    if (!name)  showErr('err_name', 'Full name is required.');
+    if (!email || !/\S+@\S+\.\S+/.test(email)) showErr('err_email', 'Valid email is required.');
+    if (pass.length < 8) showErr('err_pass', 'Password must be at least 8 characters.');
+    else if (!/[A-Z]/.test(pass)) showErr('err_pass', 'Password must contain at least one uppercase letter.');
+    else if (!/[0-9]/.test(pass)) showErr('err_pass', 'Password must contain at least one number.');
+    if (pass !== conf) showErr('err_confirm', 'Passwords do not match.');
+    if (!agree) showErr('err_agree', 'You must agree to the terms.');
+
+    if (!valid) return;
+
+    const btn = document.getElementById('submitBtn');
+    setLoading(btn, true);
+    document.getElementById('alertBox').innerHTML = '';
+
+    try {
+      const data = await apiFetch('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ full_name: name, email, password: pass, role }),
+      });
+
+      Auth.setToken(data.token);
+      Auth.setUser(data.user);
+      toast('Account created! Redirecting to your profile…', 'success');
+      setTimeout(() => window.location.href = 'profile.html', 1200);
+    } catch (err) {
+      const msg = err.errors ? err.errors.map(e=>e.msg).join('<br>') : (err.message || 'Signup failed.');
+      document.getElementById('alertBox').innerHTML = `<div class="alert alert-error">${msg}</div>`;
+    } finally {
+      setLoading(btn, false, 'Create Account');
+    }
+  });
+</script>
+</body>
+</html>

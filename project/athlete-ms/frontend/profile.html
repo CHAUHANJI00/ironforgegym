@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Athlete Dashboard — Iron Forge AMS</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* ── LAYOUT ───────────────────────────────── */
+    body { background:var(--black); padding-top:0; }
+    .dashboard-layout { display:grid; grid-template-columns:260px 1fr; min-height:100vh; }
+
+    /* ── SIDEBAR ──────────────────────────────── */
+    .sidebar {
+      background:var(--dark); border-right:1px solid var(--border);
+      position:sticky; top:0; height:100vh; overflow-y:auto;
+      display:flex; flex-direction:column;
+    }
+    .sidebar-header { padding:1.5rem; border-bottom:1px solid var(--border); }
+    .sidebar-logo   { font-family:'Bebas Neue',sans-serif; font-size:1.5rem; letter-spacing:3px; }
+    .sidebar-logo span { color:var(--orange); }
+    .sidebar-nav    { flex:1; padding:1.5rem 0; }
+    .sidebar-section-label { font-family:'Barlow Condensed',sans-serif; font-size:.68rem; letter-spacing:4px; text-transform:uppercase; color:var(--gray2); padding:.5rem 1.5rem; margin-bottom:.25rem; }
+    .sidebar-link {
+      display:flex; align-items:center; gap:.8rem; padding:.7rem 1.5rem;
+      font-family:'Barlow Condensed',sans-serif; font-size:.88rem; letter-spacing:1.5px;
+      color:var(--gray); cursor:pointer; transition:var(--transition); border:none; background:none; width:100%; text-align:left;
+    }
+    .sidebar-link:hover { color:var(--white); background:rgba(255,255,255,.04); }
+    .sidebar-link.active { color:var(--orange); background:rgba(224,92,26,.08); border-right:2px solid var(--orange); }
+    .sidebar-link .icon { font-size:1rem; width:20px; flex-shrink:0; }
+    .sidebar-footer { padding:1.2rem 1.5rem; border-top:1px solid var(--border); }
+
+    /* ── MAIN CONTENT ─────────────────────────── */
+    .main-content { padding:2rem 2.5rem; max-width:1200px; }
+    .main-header  { display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem; }
+    .page-title   { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:2px; }
+    .page-subtitle { color:var(--gray); font-size:.9rem; margin-top:.2rem; }
+
+    /* ── PROFILE HERO CARD ────────────────────── */
+    .profile-hero {
+      background:linear-gradient(135deg, #1a0a00 0%, var(--card) 50%, #0a0a1a 100%);
+      border:1px solid var(--border); border-radius:var(--radius);
+      padding:2.5rem; margin-bottom:2rem;
+      display:flex; align-items:center; gap:2rem; flex-wrap:wrap;
+      position:relative; overflow:hidden;
+    }
+    .profile-hero::before {
+      content:''; position:absolute; top:-40px; right:-40px;
+      width:200px; height:200px; border-radius:50%;
+      background:radial-gradient(circle, rgba(224,92,26,.15) 0%, transparent 70%);
+    }
+    .avatar {
+      width:90px; height:90px; border-radius:50%; background:linear-gradient(135deg,var(--orange),#800);
+      display:flex; align-items:center; justify-content:center; font-size:2.5rem;
+      flex-shrink:0; border:3px solid var(--orange); box-shadow:0 0 20px rgba(224,92,26,.3);
+    }
+    .profile-info h3  { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; letter-spacing:2px; margin-bottom:.3rem; }
+    .profile-info .role-badge { margin-bottom:.6rem; }
+    .profile-meta { display:flex; gap:1.5rem; flex-wrap:wrap; margin-top:.5rem; }
+    .profile-meta span { font-size:.82rem; color:var(--gray); font-family:'Barlow Condensed',sans-serif; letter-spacing:1px; }
+    .profile-meta span strong { color:var(--white); }
+    .profile-hero-actions { margin-left:auto; display:flex; gap:.75rem; align-items:center; }
+
+    /* ── STATS ROW ────────────────────────────── */
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+    .stat-card  { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.5rem; }
+    .stat-card-num   { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; color:var(--orange); line-height:1; }
+    .stat-card-label { font-family:'Barlow Condensed',sans-serif; font-size:.72rem; letter-spacing:3px; text-transform:uppercase; color:var(--gray); margin-top:.2rem; }
+
+    /* ── TAB PANEL ────────────────────────────── */
+    .tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:2rem; overflow-x:auto; }
+    .tab-btn {
+      padding:.75rem 1.5rem; background:none; border:none; color:var(--gray);
+      font-family:'Barlow Condensed',sans-serif; font-size:.82rem; letter-spacing:2px; text-transform:uppercase;
+      cursor:pointer; transition:var(--transition); white-space:nowrap; border-bottom:2px solid transparent; margin-bottom:-1px;
+    }
+    .tab-btn:hover  { color:var(--white); }
+    .tab-btn.active { color:var(--orange); border-bottom-color:var(--orange); }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ── FORM SECTION ─────────────────────────── */
+    .form-section { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:2rem; margin-bottom:1.5rem; }
+    .form-section-title { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:2px; margin-bottom:1.5rem; display:flex; align-items:center; gap:.6rem; }
+    .form-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; }
+    .form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+
+    /* ── TABLE ────────────────────────────────── */
+    .data-table { width:100%; border-collapse:collapse; }
+    .data-table th { font-family:'Barlow Condensed',sans-serif; font-size:.75rem; letter-spacing:3px; text-transform:uppercase; color:var(--gray); padding:.75rem 1rem; border-bottom:1px solid var(--border); text-align:left; }
+    .data-table td { padding:.85rem 1rem; border-bottom:1px solid var(--border); font-size:.9rem; color:#ccc; vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:rgba(255,255,255,.02); }
+    .empty-state { text-align:center; padding:3rem 1rem; color:var(--gray); }
+    .empty-state .empty-icon { font-size:2.5rem; display:block; margin-bottom:.75rem; }
+
+    /* ── LOADING OVERLAY ──────────────────────── */
+    #pageLoader {
+      position:fixed; inset:0; background:var(--black); z-index:9999;
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:1rem;
+    }
+    #pageLoader .loader-logo { font-family:'Bebas Neue',sans-serif; font-size:2rem; letter-spacing:4px; }
+    #pageLoader .loader-logo span { color:var(--orange); }
+    #pageLoader .loader-bar { width:200px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+    #pageLoader .loader-fill { height:100%; background:var(--orange); animation:loadBar 1.5s ease-in-out infinite; }
+    @keyframes loadBar { 0%{width:0} 60%{width:100%} 100%{width:100%} }
+
+    /* ── MOBILE SIDEBAR ───────────────────────── */
+    .sidebar-toggle { display:none; position:fixed; bottom:1.5rem; right:1.5rem; z-index:500; width:48px; height:48px; border-radius:50%; background:var(--orange); border:none; font-size:1.2rem; cursor:pointer; box-shadow:0 4px 16px rgba(224,92,26,.4); }
+
+    @media(max-width:900px) {
+      .dashboard-layout { grid-template-columns:1fr; }
+      .sidebar { position:fixed; left:-280px; top:0; bottom:0; z-index:400; transition:left .3s; width:260px; }
+      .sidebar.open { left:0; }
+      .sidebar-toggle { display:flex; align-items:center; justify-content:center; }
+      .main-content { padding:1.5rem 1rem; }
+      .stats-row { grid-template-columns:1fr 1fr; }
+      .form-grid-3 { grid-template-columns:1fr; }
+      .form-grid-2 { grid-template-columns:1fr; }
+      .profile-hero-actions { width:100%; }
+    }
+    @media(max-width:480px) {
+      .stats-row { grid-template-columns:1fr; }
+      .tab-btn { padding:.65rem 1rem; font-size:.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOADING OVERLAY ─────────────────────────── -->
+<div id="pageLoader">
+  <div class="loader-logo">IRON <span>FORGE</span></div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+  <p style="color:var(--gray); font-size:.85rem; font-family:'Barlow Condensed',sans-serif; letter-spacing:2px;">LOADING YOUR PROFILE…</p>
+</div>
+
+<div class="dashboard-layout">
+  <!-- ── SIDEBAR ─────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">⚒️ IRON <span>FORGE</span></div>
+      <div style="font-size:.72rem; color:var(--gray); margin-top:.3rem; font-family:'Barlow Condensed',sans-serif; letter-spacing:2px;">ATHLETE MANAGEMENT</div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Dashboard</div>
+      <button class="sidebar-link active" onclick="showTab('overview')" id="nav_overview">
+        <span class="icon">📊</span> Overview
+      </button>
+      <button class="sidebar-link" onclick="showTab('personal')" id="nav_personal">
+        <span class="icon">👤</span> Personal Info
+      </button>
+      <button class="sidebar-link" onclick="showTab('sports')" id="nav_sports">
+        <span class="icon">🏋️</span> Sports Profile
+      </button>
+
+      <div class="sidebar-section-label" style="margin-top:1rem;">Performance</div>
+      <button class="sidebar-link" onclick="showTab('achievements')" id="nav_achievements">
+        <span class="icon">🏆</span> Achievements
+      </button>
+      <button class="sidebar-link" onclick="showTab('stats')" id="nav_stats">
+        <span class="icon">📈</span> Performance Stats
+      </button>
+      <button class="sidebar-link" onclick="showTab('training')" id="nav_training">
+        <span class="icon">🎯</span> Training Details
+      </button>
+
+      <div class="sidebar-section-label" style="margin-top:1rem;">Account</div>
+      <button class="sidebar-link" onclick="showTab('contact')" id="nav_contact">
+        <span class="icon">📞</span> Contact Info
+      </button>
+      <button class="sidebar-link" onclick="showTab('security')" id="nav_security">
+        <span class="icon">🔐</span> Security
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-size:.78rem; color:var(--gray); margin-bottom:.8rem; font-family:'Barlow Condensed',sans-serif; letter-spacing:1px;" id="sidebarUser">Loading…</div>
+      <button onclick="handleLogout()" class="btn btn-danger btn-sm btn-full">Sign Out</button>
+      <a href="index.html" class="btn btn-ghost btn-sm btn-full mt-1" style="text-align:center;">← Home</a>
+    </div>
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────────────── -->
+  <main class="main-content" id="mainContent" style="display:none;">
+
+    <!-- PROFILE HERO -->
+    <div class="profile-hero" id="profileHero">
+      <div class="avatar" id="avatarEl">⚒</div>
+      <div class="profile-info">
+        <h3 id="heroName">—</h3>
+        <div class="role-badge"><span class="badge badge-orange" id="heroRole">Athlete</span> <span class="badge badge-gray" id="heroPlan">Iron Starter</span></div>
+        <div class="profile-meta">
+          <span><strong id="heroSport">—</strong> &nbsp;|&nbsp; Sport</span>
+          <span><strong id="heroLevel">—</strong> &nbsp;|&nbsp; Level</span>
+          <span><strong id="heroCity">—</strong> &nbsp;|&nbsp; Location</span>
+          <span><strong id="heroExp">—</strong> &nbsp;|&nbsp; Years Exp.</span>
+        </div>
+      </div>
+      <div class="profile-hero-actions">
+        <button onclick="showTab('personal')" class="btn btn-primary btn-sm">Edit Profile</button>
+      </div>
+    </div>
+
+    <!-- QUICK STATS -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-card">
+        <div class="stat-card-num" id="qAchievements">0</div>
+        <div class="stat-card-label">Achievements</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-num" id="qStats">0</div>
+        <div class="stat-card-label">Performance Records</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-num" id="qExp">0</div>
+        <div class="stat-card-label">Years Experience</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-num" id="qMembership">—</div>
+        <div class="stat-card-label">Membership</div>
+      </div>
+    </div>
+
+    <!-- TAB BAR -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('overview')" data-tab="overview">📊 Overview</button>
+      <button class="tab-btn" onclick="showTab('personal')" data-tab="personal">👤 Personal</button>
+      <button class="tab-btn" onclick="showTab('sports')" data-tab="sports">🏋️ Sports</button>
+      <button class="tab-btn" onclick="showTab('achievements')" data-tab="achievements">🏆 Achievements</button>
+      <button class="tab-btn" onclick="showTab('stats')" data-tab="stats">📈 Stats</button>
+      <button class="tab-btn" onclick="showTab('training')" data-tab="training">🎯 Training</button>
+      <button class="tab-btn" onclick="showTab('contact')" data-tab="contact">📞 Contact</button>
+      <button class="tab-btn" onclick="showTab('security')" data-tab="security">🔐 Security</button>
+    </div>
+
+    <!-- ═══ TAB: OVERVIEW ═══════════════════════ -->
+    <div class="tab-panel active" id="panel_overview">
+      <div class="grid-2" style="gap:1.5rem;">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🏆 Recent Achievements</div><button onclick="showTab('achievements')" class="btn btn-ghost btn-sm">View All</button></div>
+          <div id="overviewAchievements"><p class="text-gray">No achievements yet.</p></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📈 Top Performance Stats</div><button onclick="showTab('stats')" class="btn btn-ghost btn-sm">View All</button></div>
+          <div id="overviewStats"><p class="text-gray">No stats recorded yet.</p></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🎯 Training Summary</div><button onclick="showTab('training')" class="btn btn-ghost btn-sm">Edit</button></div>
+          <div id="overviewTraining"><p class="text-gray">No training details added yet.</p></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">ℹ️ Profile Completeness</div></div>
+          <div id="overviewComplete"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: PERSONAL INFO ══════════════════ -->
+    <div class="tab-panel" id="panel_personal">
+      <form id="personalForm">
+        <div class="form-section">
+          <div class="form-section-title">👤 Personal Information</div>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="p_full_name" type="text" placeholder="Your full name"></div>
+            <div class="form-group"><label class="form-label">Date of Birth</label><input class="form-control" id="p_dob" type="date"></div>
+            <div class="form-group"><label class="form-label">Gender</label>
+              <select class="form-control" id="p_gender">
+                <option value="">Select…</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="non_binary">Non-binary</option>
+                <option value="prefer_not_to_say">Prefer not to say</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Nationality</label><input class="form-control" id="p_nationality" type="text" placeholder="Indian"></div>
+            <div class="form-group"><label class="form-label">City</label><input class="form-control" id="p_city" type="text" placeholder="Dehradun"></div>
+            <div class="form-group"><label class="form-label">State</label><input class="form-control" id="p_state" type="text" placeholder="Uttarakhand"></div>
+          </div>
+          <div class="form-group mt-3"><label class="form-label">Bio / About Me</label><textarea class="form-control" id="p_bio" placeholder="Tell us about your athletic journey…"></textarea></div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">⚖️ Physical Statistics</div>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Height (cm)</label><input class="form-control" id="p_height" type="number" placeholder="175" min="100" max="250"></div>
+            <div class="form-group"><label class="form-label">Weight (kg)</label><input class="form-control" id="p_weight" type="number" placeholder="75" min="30" max="300"></div>
+            <div class="form-group"><label class="form-label">Blood Group</label>
+              <select class="form-control" id="p_blood">
+                <option value="">Select…</option>
+                <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Dominant Hand</label>
+              <select class="form-control" id="p_hand">
+                <option value="">Select…</option>
+                <option value="right">Right</option>
+                <option value="left">Left</option>
+                <option value="ambidextrous">Ambidextrous</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="personalAlert"></div>
+        <button type="submit" class="btn btn-primary" id="savePersonalBtn">Save Personal Info</button>
+      </form>
+    </div>
+
+    <!-- ═══ TAB: SPORTS PROFILE ══════════════════ -->
+    <div class="tab-panel" id="panel_sports">
+      <form id="sportsForm">
+        <div class="form-section">
+          <div class="form-section-title">🏋️ Sports Information</div>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Sport Category *</label>
+              <select class="form-control" id="s_category">
+                <option value="">Select sport…</option>
+                <option>Powerlifting</option><option>CrossFit</option><option>Boxing</option>
+                <option>Wrestling</option><option>Athletics (Track & Field)</option><option>Swimming</option>
+                <option>Cycling</option><option>Football</option><option>Cricket</option>
+                <option>Basketball</option><option>Badminton</option><option>Tennis</option>
+                <option>Martial Arts</option><option>Gymnastics</option><option>Yoga</option>
+                <option>Bodybuilding</option><option>Other</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Discipline / Specialisation</label><input class="form-control" id="s_discipline" type="text" placeholder="e.g. 100m Sprint, Squat"></div>
+            <div class="form-group"><label class="form-label">Playing Level</label>
+              <select class="form-control" id="s_level">
+                <option value="">Select…</option>
+                <option value="beginner">Beginner</option>
+                <option value="amateur">Amateur</option>
+                <option value="semi_pro">Semi-Professional</option>
+                <option value="professional">Professional</option>
+                <option value="elite">Elite / National</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Team / Club</label><input class="form-control" id="s_team" type="text" placeholder="Iron Forge Gym"></div>
+            <div class="form-group"><label class="form-label">Coach Name</label><input class="form-control" id="s_coach" type="text" placeholder="Chauhan Ji"></div>
+            <div class="form-group"><label class="form-label">Years of Experience</label><input class="form-control" id="s_exp" type="number" min="0" max="50" placeholder="5"></div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">💳 Membership Plan</div>
+          <div class="form-grid-3">
+            <div class="form-group" style="grid-column:span 3;">
+              <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;">
+                <label class="plan-radio" id="pr_starter">
+                  <input type="radio" name="membership" value="iron_starter" id="mp_starter" style="accent-color:var(--orange);">
+                  <span style="font-family:'Bebas Neue',sans-serif; letter-spacing:2px;">Iron Starter</span>
+                  <span style="color:var(--orange);">₹999/mo</span>
+                </label>
+                <label class="plan-radio" id="pr_forge">
+                  <input type="radio" name="membership" value="iron_forge" id="mp_forge" style="accent-color:var(--orange);">
+                  <span style="font-family:'Bebas Neue',sans-serif; letter-spacing:2px;">Iron Forge</span>
+                  <span style="color:var(--orange);">₹1,999/mo</span>
+                </label>
+                <label class="plan-radio" id="pr_elite">
+                  <input type="radio" name="membership" value="iron_elite" id="mp_elite" style="accent-color:var(--orange);">
+                  <span style="font-family:'Bebas Neue',sans-serif; letter-spacing:2px;">Iron Elite</span>
+                  <span style="color:var(--orange);">₹3,499/mo</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="sportsAlert"></div>
+        <button type="submit" class="btn btn-primary" id="saveSportsBtn">Save Sports Profile</button>
+      </form>
+    </div>
+
+    <!-- ═══ TAB: ACHIEVEMENTS ════════════════════ -->
+    <div class="tab-panel" id="panel_achievements">
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-title">🏆 My Achievements</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addAchModal')">+ Add Achievement</button>
+        </div>
+        <div id="achievementsTable">
+          <div class="empty-state"><span class="empty-icon">🏅</span><p>No achievements yet. Add your first!</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: PERFORMANCE STATS ═══════════════ -->
+    <div class="tab-panel" id="panel_stats">
+      <div class="card mb-4">
+        <div class="card-header">
+          <div class="card-title">📈 Performance Statistics</div>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addStatModal')">+ Add Record</button>
+        </div>
+        <div id="statsTable">
+          <div class="empty-state"><span class="empty-icon">📊</span><p>No stats recorded yet. Track your first PR!</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ TAB: TRAINING DETAILS ════════════════ -->
+    <div class="tab-panel" id="panel_training">
+      <form id="trainingForm">
+        <div class="form-section">
+          <div class="form-section-title">📅 Training Schedule</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Training Days</label>
+              <div id="trainingDaysGroup" style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.3rem;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88rem; color:#ccc;">
+                  <input type="checkbox" value="Mon" style="accent-color:var(--orange);" class="td-check"> Mon
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88rem; color:#ccc;">
+                  <input type="checkbox" value="Tue" style="accent-color:var(--orange);" class="td-check"> Tue
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88rem; color:#ccc;">
+                  <input type="checkbox" value="Wed" style="accent-color:var(--orange);" class="td-check"> Wed
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88sm; color:#ccc;">
+                  <input type="checkbox" value="Thu" style="accent-color:var(--orange);" class="td-check"> Thu
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88rem; color:#ccc;">
+                  <input type="checkbox" value="Fri" style="accent-color:var(--orange);" class="td-check"> Fri
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88rem; color:#ccc;">
+                  <input type="checkbox" value="Sat" style="accent-color:var(--orange);" class="td-check"> Sat
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:.35rem; font-size:.88rem; color:#ccc;">
+                  <input type="checkbox" value="Sun" style="accent-color:var(--orange);" class="td-check"> Sun
+                </label>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Session Duration</label>
+              <select class="form-control" id="t_duration">
+                <option value="">Select…</option>
+                <option>30 minutes</option><option>45 minutes</option><option>60 minutes</option>
+                <option>75 minutes</option><option>90 minutes</option><option>120 minutes</option><option>2+ hours</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preferred Training Time</label>
+              <select class="form-control" id="t_time">
+                <option value="">Select…</option>
+                <option value="morning">🌅 Morning (5–9 AM)</option>
+                <option value="afternoon">☀️ Afternoon (12–4 PM)</option>
+                <option value="evening">🌆 Evening (5–8 PM)</option>
+                <option value="night">🌙 Night (9 PM+)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current Program / Plan</label>
+              <input class="form-control" id="t_program" type="text" placeholder="e.g. 5/3/1 Powerlifting, PPL Split">
+            </div>
+          </div>
+          <div class="form-group mt-3"><label class="form-label">Training Goals</label><textarea class="form-control" id="t_goals" placeholder="e.g. Increase bench press 1RM to 140kg by March 2025, qualify for state-level competition…"></textarea></div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">🥗 Nutrition & Recovery</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Diet Type</label>
+              <select class="form-control" id="t_diet">
+                <option value="">Select…</option>
+                <option>Standard (No restriction)</option>
+                <option>High Protein</option>
+                <option>Vegetarian</option>
+                <option>Vegan</option>
+                <option>Keto</option>
+                <option>Mediterranean</option>
+                <option>Caloric Surplus (Bulk)</option>
+                <option>Caloric Deficit (Cut)</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Recovery Methods</label><input class="form-control" id="t_recovery" type="text" placeholder="e.g. Cold therapy, massage, foam rolling"></div>
+          </div>
+          <div class="form-group mt-2"><label class="form-label">Supplements Used</label><textarea class="form-control" id="t_supplements" placeholder="e.g. Whey protein, creatine, vitamin D3, omega-3…" style="min-height:80px;"></textarea></div>
+          <div class="form-group mt-2"><label class="form-label">Injury History</label><textarea class="form-control" id="t_injuries" placeholder="Any past injuries, surgeries, or ongoing conditions…" style="min-height:80px;"></textarea></div>
+        </div>
+
+        <div id="trainingAlert"></div>
+        <button type="submit" class="btn btn-primary" id="saveTrainingBtn">Save Training Details</button>
+      </form>
+    </div>
+
+    <!-- ═══ TAB: CONTACT INFO ═════════════════════ -->
+    <div class="tab-panel" id="panel_contact">
+      <form id="contactForm">
+        <div class="form-section">
+          <div class="form-section-title">📞 Contact Information</div>
+          <div class="form-grid-2">
+            <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" id="c_phone" type="tel" placeholder="+91 98765 43210"></div>
+            <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="c_email" type="email" disabled style="opacity:.6;" id="c_email_ro"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">🚨 Emergency Contact</div>
+          <div class="form-grid-2">
+            <div class="form-group"><label class="form-label">Emergency Contact Name</label><input class="form-control" id="c_ec_name" type="text" placeholder="Parent / Guardian name"></div>
+            <div class="form-group"><label class="form-label">Emergency Contact Phone</label><input class="form-control" id="c_ec_phone" type="tel" placeholder="+91 98765 43210"></div>
+          </div>
+        </div>
+        <div class="form-section">
+          <div class="form-section-title">🌐 Social Profiles</div>
+          <div class="form-grid-2">
+            <div class="form-group"><label class="form-label">📸 Instagram</label><input class="form-control" id="c_instagram" type="text" placeholder="@your_handle"></div>
+            <div class="form-group"><label class="form-label">🐦 Twitter / X</label><input class="form-control" id="c_twitter" type="text" placeholder="@your_handle"></div>
+            <div class="form-group"><label class="form-label">💼 LinkedIn</label><input class="form-control" id="c_linkedin" type="text" placeholder="linkedin.com/in/yourname"></div>
+            <div class="form-group"><label class="form-label">🌍 Website</label><input class="form-control" id="c_website" type="url" placeholder="https://yoursite.com"></div>
+          </div>
+        </div>
+        <div id="contactAlert"></div>
+        <button type="submit" class="btn btn-primary" id="saveContactBtn">Save Contact Info</button>
+      </form>
+    </div>
+
+    <!-- ═══ TAB: SECURITY ════════════════════════ -->
+    <div class="tab-panel" id="panel_security">
+      <div class="form-section" style="max-width:520px;">
+        <div class="form-section-title">🔐 Change Password</div>
+        <div id="securityAlert"></div>
+        <form id="securityForm" style="display:flex; flex-direction:column; gap:1rem;">
+          <div class="form-group"><label class="form-label">Current Password</label><input class="form-control" id="sec_current" type="password" placeholder="Your current password"></div>
+          <div class="form-group"><label class="form-label">New Password</label><input class="form-control" id="sec_new" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number"></div>
+          <div class="form-group"><label class="form-label">Confirm New Password</label><input class="form-control" id="sec_confirm" type="password" placeholder="Repeat new password"></div>
+          <button type="submit" class="btn btn-primary" id="saveSecurityBtn">Update Password</button>
+        </form>
+      </div>
+      <div class="form-section mt-3" style="max-width:520px; border-color:rgba(239,68,68,.2);">
+        <div class="form-section-title" style="color:var(--error);">⚠️ Danger Zone</div>
+        <p class="text-gray" style="font-size:.9rem; margin-bottom:1rem;">Logging out will end your current session. You can sign back in anytime.</p>
+        <button onclick="handleLogout()" class="btn btn-danger">Sign Out of All Sessions</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── MOBILE SIDEBAR TOGGLE ───────────────────── -->
+<button class="sidebar-toggle" id="sidebarToggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<!-- ═══════ MODALS ═══════════════════════════════ -->
+
+<!-- ADD ACHIEVEMENT MODAL -->
+<div class="modal-backdrop" id="addAchModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🏆 Add Achievement</div>
+      <button class="modal-close" onclick="closeModal('addAchModal')">×</button>
+    </div>
+    <form id="addAchForm" style="display:flex; flex-direction:column; gap:1rem;">
+      <div id="achModalAlert"></div>
+      <div class="form-group"><label class="form-label">Title *</label><input class="form-control" id="ach_title" type="text" placeholder="State Powerlifting Champion 2024"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Event Name</label><input class="form-control" id="ach_event" type="text" placeholder="UP State Open 2024"></div>
+        <div class="form-group"><label class="form-label">Position / Award</label><input class="form-control" id="ach_position" type="text" placeholder="1st Place / Gold Medal"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Date</label><input class="form-control" id="ach_date" type="date"></div>
+        <div class="form-group"><label class="form-label">Level</label>
+          <select class="form-control" id="ach_level">
+            <option value="">Select…</option>
+            <option value="local">Local</option>
+            <option value="state">State</option>
+            <option value="national">National</option>
+            <option value="international">International</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" id="ach_desc" placeholder="Additional details…" style="min-height:80px;"></textarea></div>
+      <button type="submit" class="btn btn-primary" id="addAchBtn">Add Achievement</button>
+    </form>
+  </div>
+</div>
+
+<!-- ADD STAT MODAL -->
+<div class="modal-backdrop" id="addStatModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📈 Add Performance Record</div>
+      <button class="modal-close" onclick="closeModal('addStatModal')">×</button>
+    </div>
+    <form id="addStatForm" style="display:flex; flex-direction:column; gap:1rem;">
+      <div id="statModalAlert"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Stat Name *</label><input class="form-control" id="stat_name" type="text" placeholder="Bench Press 1RM"></div>
+        <div class="form-group"><label class="form-label">Value *</label><input class="form-control" id="stat_value" type="text" placeholder="120"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Unit</label><input class="form-control" id="stat_unit" type="text" placeholder="kg / sec / reps / km"></div>
+        <div class="form-group"><label class="form-label">Date Recorded</label><input class="form-control" id="stat_date" type="date"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" id="stat_notes" placeholder="Context, conditions…" style="min-height:70px;"></textarea></div>
+      <button type="submit" class="btn btn-primary" id="addStatBtn">Add Record</button>
+    </form>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<style>
+  .plan-radio { display:flex; flex-direction:column; gap:.3rem; cursor:pointer; background:var(--card2); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; transition:var(--transition); }
+  .plan-radio:has(input:checked) { border-color:var(--orange); background:rgba(224,92,26,.06); }
+</style>
+<script>
+  requireAuth('login.html');
+
+  let profileData = {};
+
+  // ── Tabs ────────────────────────────────────
+  function showTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.sidebar-link').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel_' + name)?.classList.add('active');
+    document.querySelector(`.tab-btn[data-tab="${name}"]`)?.classList.add('active');
+    document.getElementById('nav_' + name)?.classList.add('active');
+  }
+
+  // ── Modal helpers ────────────────────────────
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-backdrop').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+
+  // ── Load profile ─────────────────────────────
+  async function loadProfile() {
+    try {
+      const data = await apiFetch('/athlete/profile');
+      profileData = data.data;
+      populateAll(profileData);
+      document.getElementById('pageLoader').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+    } catch (err) {
+      toast('Failed to load profile: ' + (err.message || 'Unknown error'), 'error');
+    }
+  }
+
+  function populateAll(d) {
+    const u  = d.user    || {};
+    const p  = d.profile || {};
+    const t  = d.training || {};
+
+    // Sidebar user
+    document.getElementById('sidebarUser').textContent = u.full_name || u.email || '';
+
+    // Hero
+    document.getElementById('heroName').textContent   = u.full_name || '—';
+    document.getElementById('heroRole').textContent   = cap(u.role) || 'Athlete';
+    document.getElementById('heroPlan').textContent   = cap(p.membership_plan) || '—';
+    document.getElementById('heroSport').textContent  = p.sport_category || '—';
+    document.getElementById('heroLevel').textContent  = cap(p.playing_level) || '—';
+    document.getElementById('heroCity').textContent   = [p.city, p.state].filter(Boolean).join(', ') || '—';
+    document.getElementById('heroExp').textContent    = p.years_experience ?? '—';
+
+    // Avatar initials
+    const initials = (u.full_name || 'A').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('avatarEl').textContent = initials;
+
+    // Quick stats
+    document.getElementById('qAchievements').textContent = d.achievements.length;
+    document.getElementById('qStats').textContent        = d.stats.length;
+    document.getElementById('qExp').textContent          = p.years_experience ?? 0;
+    const planMap = { iron_starter:'Starter', iron_forge:'Forge', iron_elite:'Elite' };
+    document.getElementById('qMembership').textContent = planMap[p.membership_plan] || '—';
+
+    // Personal form
+    setValue('p_full_name', u.full_name);
+    setValue('p_dob',  p.date_of_birth ? p.date_of_birth.substring(0,10) : '');
+    setValue('p_gender', p.gender);
+    setValue('p_nationality', p.nationality);
+    setValue('p_city', p.city);
+    setValue('p_state', p.state);
+    setValue('p_bio', p.bio);
+    setValue('p_height', p.height_cm);
+    setValue('p_weight', p.weight_kg);
+    setValue('p_blood', p.blood_group);
+    setValue('p_hand', p.dominant_hand);
+
+    // Sports form
+    setValue('s_category', p.sport_category);
+    setValue('s_discipline', p.sport_discipline);
+    setValue('s_level', p.playing_level);
+    setValue('s_team', p.team_club);
+    setValue('s_coach', p.coach_name);
+    setValue('s_exp', p.years_experience);
+    const radioVal = p.membership_plan || 'iron_starter';
+    const radioEl = document.querySelector(`input[name="membership"][value="${radioVal}"]`);
+    if (radioEl) radioEl.checked = true;
+
+    // Training form
+    if (t.training_days) {
+      const days = t.training_days.split(',');
+      document.querySelectorAll('.td-check').forEach(cb => { cb.checked = days.includes(cb.value); });
+    }
+    setValue('t_duration', t.session_duration);
+    setValue('t_time', t.preferred_time);
+    setValue('t_program', t.current_program);
+    setValue('t_goals', t.training_goals);
+    setValue('t_diet', t.diet_type);
+    setValue('t_supplements', t.supplements);
+    setValue('t_injuries', t.injuries_history);
+    setValue('t_recovery', t.recovery_methods);
+
+    // Contact form
+    setValue('c_phone', p.phone);
+    const emailEl = document.getElementById('c_email');
+    if (emailEl) emailEl.value = u.email || '';
+    setValue('c_ec_name', p.emergency_contact_name);
+    setValue('c_ec_phone', p.emergency_contact_phone);
+    setValue('c_instagram', p.social_instagram);
+    setValue('c_twitter', p.social_twitter);
+    setValue('c_linkedin', p.social_linkedin);
+    setValue('c_website', p.website);
+
+    // Achievements & stats tables
+    renderAchievements(d.achievements);
+    renderStats(d.stats);
+    renderOverview(d);
+    renderCompletion(p, u, t, d);
+  }
+
+  function setValue(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== null && val !== undefined) el.value = val;
+  }
+
+  // ── Render achievements ──────────────────────
+  function renderAchievements(list) {
+    const container = document.getElementById('achievementsTable');
+    const overview  = document.getElementById('overviewAchievements');
+    if (!list || list.length === 0) {
+      container.innerHTML = '<div class="empty-state"><span class="empty-icon">🏅</span><p>No achievements yet. Add your first!</p></div>';
+      overview.innerHTML  = '<p class="text-muted" style="font-size:.88rem;">No achievements yet.</p>';
+      return;
+    }
+    const levelBadge = { local:'badge-gray', state:'badge-orange', national:'badge-gold', international:'badge-green' };
+    container.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Title</th><th>Event</th><th>Position</th><th>Level</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody>
+          ${list.map(a => `
+            <tr>
+              <td><strong>${a.title}</strong><br><span style="font-size:.78rem; color:var(--gray);">${a.description || ''}</span></td>
+              <td>${a.event_name || '—'}</td>
+              <td>${a.position || '—'}</td>
+              <td><span class="badge ${levelBadge[a.level] || 'badge-gray'}">${a.level || '—'}</span></td>
+              <td>${fmtDate(a.award_date)}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteAchievement(${a.id})">Delete</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+    overview.innerHTML = list.slice(0,3).map(a =>
+      `<div style="padding:.5rem 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:.9rem;">${a.title}</span>
+        <span class="badge ${levelBadge[a.level] || 'badge-gray'}">${a.level || ''}</span>
+      </div>`
+    ).join('');
+  }
+
+  // ── Render stats ─────────────────────────────
+  function renderStats(list) {
+    const container = document.getElementById('statsTable');
+    const overview  = document.getElementById('overviewStats');
+    if (!list || list.length === 0) {
+      container.innerHTML = '<div class="empty-state"><span class="empty-icon">📊</span><p>No performance records yet.</p></div>';
+      overview.innerHTML  = '<p class="text-muted" style="font-size:.88rem;">No performance stats yet.</p>';
+      return;
+    }
+    container.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>Stat Name</th><th>Value</th><th>Unit</th><th>Date</th><th>Notes</th><th>Action</th></tr></thead>
+        <tbody>
+          ${list.map(s => `
+            <tr>
+              <td><strong>${s.stat_name}</strong></td>
+              <td><span style="font-family:'Bebas Neue'; font-size:1.3rem; color:var(--orange);">${s.stat_value}</span></td>
+              <td>${s.unit || '—'}</td>
+              <td>${fmtDate(s.recorded_date)}</td>
+              <td style="color:var(--gray); font-size:.82rem;">${s.notes || '—'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteStat(${s.id})">Delete</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+    overview.innerHTML = list.slice(0,3).map(s =>
+      `<div style="padding:.5rem 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:.9rem;">${s.stat_name}</span>
+        <span style="font-family:'Bebas Neue'; font-size:1.2rem; color:var(--orange);">${s.stat_value} ${s.unit || ''}</span>
+      </div>`
+    ).join('');
+  }
+
+  // ── Overview training summary ────────────────
+  function renderOverview(d) {
+    const t  = d.training || {};
+    const ot = document.getElementById('overviewTraining');
+    if (t.training_days || t.current_program) {
+      ot.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; font-size:.88rem;">
+          <div><span class="text-gray">Training Days</span><br><strong>${t.training_days || '—'}</strong></div>
+          <div><span class="text-gray">Duration</span><br><strong>${t.session_duration || '—'}</strong></div>
+          <div><span class="text-gray">Preferred Time</span><br><strong>${cap(t.preferred_time) || '—'}</strong></div>
+          <div><span class="text-gray">Current Program</span><br><strong>${t.current_program || '—'}</strong></div>
+          ${t.training_goals ? `<div style="grid-column:span 2;"><span class="text-gray">Goals</span><br><span style="color:#ccc;">${t.training_goals}</span></div>` : ''}
+        </div>`;
+    } else {
+      ot.innerHTML = '<p class="text-muted" style="font-size:.88rem;">No training details added.</p>';
+    }
+  }
+
+  function renderCompletion(p, u, t, d) {
+    const checks = [
+      { label: 'Personal info',      done: !!(p.date_of_birth && p.gender) },
+      { label: 'Physical stats',     done: !!(p.height_cm && p.weight_kg) },
+      { label: 'Sports profile',     done: !!(p.sport_category) },
+      { label: 'Training details',   done: !!(t.training_days) },
+      { label: 'Contact info',       done: !!(p.phone) },
+      { label: 'Added achievement',  done: d.achievements.length > 0 },
+      { label: 'Added stat record',  done: d.stats.length > 0 },
+    ];
+    const done = checks.filter(c=>c.done).length;
+    const pct  = Math.round((done/checks.length)*100);
+    const el   = document.getElementById('overviewComplete');
+    el.innerHTML = `
+      <div style="margin-bottom:1rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:.5rem;">
+          <span style="font-size:.88rem; color:var(--gray);">Profile ${pct}% complete</span>
+          <span style="font-family:'Bebas Neue'; color:var(--orange);">${done}/${checks.length}</span>
+        </div>
+        <div style="height:6px; background:var(--border); border-radius:3px; overflow:hidden;">
+          <div style="height:100%; width:${pct}%; background:var(--orange); border-radius:3px; transition:width .5s;"></div>
+        </div>
+      </div>
+      ${checks.map(c=>`
+        <div style="display:flex; align-items:center; gap:.6rem; padding:.35rem 0; font-size:.85rem; color:${c.done?'#ccc':'var(--gray2)'};">
+          <span style="color:${c.done?'var(--success)':'var(--gray2)'}; font-size:.9rem;">${c.done?'✓':'○'}</span>
+          ${c.label}
+        </div>`).join('')}`;
+  }
+
+  // ── Save handlers ────────────────────────────
+  async function saveFormHandler(formId, alertId, btnId, body, endpoint, method='PUT') {
+    const alertEl = document.getElementById(alertId);
+    const btn     = document.getElementById(btnId);
+    alertEl.innerHTML = '';
+    setLoading(btn, true);
+    try {
+      await apiFetch(endpoint, { method, body: JSON.stringify(body) });
+      alertEl.innerHTML = '<div class="alert alert-success">✓ Saved successfully!</div>';
+      toast('Saved!', 'success');
+      await loadProfile();
+    } catch (err) {
+      const msg = err.message || 'Save failed.';
+      alertEl.innerHTML = `<div class="alert alert-error">✕ ${msg}</div>`;
+      toast(msg, 'error');
+    } finally {
+      setLoading(btn, false);
+    }
+  }
+
+  // Personal
+  document.getElementById('personalForm').addEventListener('submit', e => {
+    e.preventDefault();
+    saveFormHandler('personalForm','personalAlert','savePersonalBtn', {
+      full_name:      document.getElementById('p_full_name').value,
+      date_of_birth:  document.getElementById('p_dob').value || null,
+      gender:         document.getElementById('p_gender').value,
+      nationality:    document.getElementById('p_nationality').value,
+      city:           document.getElementById('p_city').value,
+      state:          document.getElementById('p_state').value,
+      bio:            document.getElementById('p_bio').value,
+      height_cm:      document.getElementById('p_height').value || null,
+      weight_kg:      document.getElementById('p_weight').value || null,
+      blood_group:    document.getElementById('p_blood').value,
+      dominant_hand:  document.getElementById('p_hand').value,
+    }, '/athlete/profile');
+  });
+
+  // Sports
+  document.getElementById('sportsForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const selPlan = document.querySelector('input[name="membership"]:checked');
+    saveFormHandler('sportsForm','sportsAlert','saveSportsBtn', {
+      sport_category:   document.getElementById('s_category').value,
+      sport_discipline: document.getElementById('s_discipline').value,
+      playing_level:    document.getElementById('s_level').value,
+      team_club:        document.getElementById('s_team').value,
+      coach_name:       document.getElementById('s_coach').value,
+      years_experience: document.getElementById('s_exp').value || 0,
+      membership_plan:  selPlan ? selPlan.value : 'iron_starter',
+    }, '/athlete/profile');
+  });
+
+  // Training
+  document.getElementById('trainingForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const days = [...document.querySelectorAll('.td-check:checked')].map(c=>c.value).join(',');
+    saveFormHandler('trainingForm','trainingAlert','saveTrainingBtn', {
+      training_days:    days,
+      session_duration: document.getElementById('t_duration').value,
+      preferred_time:   document.getElementById('t_time').value,
+      current_program:  document.getElementById('t_program').value,
+      training_goals:   document.getElementById('t_goals').value,
+      diet_type:        document.getElementById('t_diet').value,
+      supplements:      document.getElementById('t_supplements').value,
+      injuries_history: document.getElementById('t_injuries').value,
+      recovery_methods: document.getElementById('t_recovery').value,
+    }, '/athlete/training');
+  });
+
+  // Contact
+  document.getElementById('contactForm').addEventListener('submit', e => {
+    e.preventDefault();
+    saveFormHandler('contactForm','contactAlert','saveContactBtn', {
+      phone:                    document.getElementById('c_phone').value,
+      emergency_contact_name:   document.getElementById('c_ec_name').value,
+      emergency_contact_phone:  document.getElementById('c_ec_phone').value,
+      social_instagram:         document.getElementById('c_instagram').value,
+      social_twitter:           document.getElementById('c_twitter').value,
+      social_linkedin:          document.getElementById('c_linkedin').value,
+      website:                  document.getElementById('c_website').value,
+    }, '/athlete/profile');
+  });
+
+  // Security
+  document.getElementById('securityForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const alertEl = document.getElementById('securityAlert');
+    const btn     = document.getElementById('saveSecurityBtn');
+    const cur  = document.getElementById('sec_current').value;
+    const nw   = document.getElementById('sec_new').value;
+    const conf = document.getElementById('sec_confirm').value;
+    if (nw !== conf) { alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>'; return; }
+    if (nw.length < 8) { alertEl.innerHTML='<div class="alert alert-error">Password must be at least 8 characters.</div>'; return; }
+    alertEl.innerHTML = '';
+    setLoading(btn, true);
+    try {
+      await apiFetch('/auth/change-password', { method:'POST', body: JSON.stringify({ current_password: cur, new_password: nw }) });
+      alertEl.innerHTML = '<div class="alert alert-success">✓ Password updated successfully!</div>';
+      document.getElementById('securityForm').reset();
+      toast('Password changed!', 'success');
+    } catch (err) {
+      alertEl.innerHTML = `<div class="alert alert-error">✕ ${err.message || 'Failed to change password.'}</div>`;
+    } finally {
+      setLoading(btn, false, 'Update Password');
+    }
+  });
+
+  // ── Add achievement ──────────────────────────
+  document.getElementById('addAchForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('addAchBtn');
+    const alertEl = document.getElementById('achModalAlert');
+    alertEl.innerHTML = '';
+    setLoading(btn, true);
+    try {
+      await apiFetch('/athlete/achievements', { method:'POST', body: JSON.stringify({
+        title:       document.getElementById('ach_title').value,
+        event_name:  document.getElementById('ach_event').value,
+        position:    document.getElementById('ach_position').value,
+        award_date:  document.getElementById('ach_date').value || null,
+        level:       document.getElementById('ach_level').value,
+        description: document.getElementById('ach_desc').value,
+      })});
+      toast('Achievement added!', 'success');
+      closeModal('addAchModal');
+      document.getElementById('addAchForm').reset();
+      await loadProfile();
+    } catch (err) {
+      alertEl.innerHTML = `<div class="alert alert-error">✕ ${err.message || 'Failed.'}</div>`;
+    } finally {
+      setLoading(btn, false, 'Add Achievement');
+    }
+  });
+
+  // ── Add stat ─────────────────────────────────
+  document.getElementById('addStatForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = document.getElementById('addStatBtn');
+    const alertEl = document.getElementById('statModalAlert');
+    alertEl.innerHTML = '';
+    setLoading(btn, true);
+    try {
+      await apiFetch('/athlete/stats', { method:'POST', body: JSON.stringify({
+        stat_name:     document.getElementById('stat_name').value,
+        stat_value:    document.getElementById('stat_value').value,
+        unit:          document.getElementById('stat_unit').value,
+        recorded_date: document.getElementById('stat_date').value || null,
+        notes:         document.getElementById('stat_notes').value,
+      })});
+      toast('Performance record added!', 'success');
+      closeModal('addStatModal');
+      document.getElementById('addStatForm').reset();
+      await loadProfile();
+    } catch (err) {
+      alertEl.innerHTML = `<div class="alert alert-error">✕ ${err.message || 'Failed.'}</div>`;
+    } finally {
+      setLoading(btn, false, 'Add Record');
+    }
+  });
+
+  // ── Delete helpers ────────────────────────────
+  async function deleteAchievement(id) {
+    if (!confirm('Delete this achievement?')) return;
+    try {
+      await apiFetch(`/athlete/achievements/${id}`, { method:'DELETE' });
+      toast('Achievement deleted.', 'success');
+      await loadProfile();
+    } catch (err) { toast('Delete failed.', 'error'); }
+  }
+
+  async function deleteStat(id) {
+    if (!confirm('Delete this performance record?')) return;
+    try {
+      await apiFetch(`/athlete/stats/${id}`, { method:'DELETE' });
+      toast('Record deleted.', 'success');
+      await loadProfile();
+    } catch (err) { toast('Delete failed.', 'error'); }
+  }
+
+  // ── Logout ────────────────────────────────────
+  function handleLogout() {
+    if (!confirm('Sign out of Iron Forge?')) return;
+    Auth.logout();
+    toast('Signed out successfully.', 'success');
+    setTimeout(() => window.location.href = 'index.html', 800);
+  }
+
+  // ── Init ──────────────────────────────────────
+  loadProfile();
+</script>
+</body>
+</html>
