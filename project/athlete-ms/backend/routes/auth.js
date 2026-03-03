@@ -14,7 +14,7 @@ function getCookieOptions() {
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
   };
@@ -213,12 +213,7 @@ router.post(
 //  POST /api/auth/logout
 // ─────────────────────────────────────────────
 router.post('/logout', (req, res) => {
-  res.clearCookie(TOKEN_COOKIE, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    path: '/',
-  });
+  res.clearCookie(TOKEN_COOKIE, getCookieOptions());
   return res.json({ success: true, message: 'Logged out successfully.' });
 });
 
